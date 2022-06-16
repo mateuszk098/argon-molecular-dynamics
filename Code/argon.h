@@ -55,7 +55,7 @@ private:
     double P;  ///< Pressure of the system at a given moment in time
     double Ek; ///< Kinetic energy at a given moment in time
 
-    // Mean values of physical parameters4
+    // Mean values of physical parameters
     double Hmean; ///< Mean Hamiltonian
     double Tmean; ///< Mean Temperature
     double Pmean; ///< Mean Pressure
@@ -75,7 +75,7 @@ public:
     void checkParameters() const noexcept;
     void initialState(const char *rFilename, const char *pFilename, const char *htpFilename);
     void simulateDynamics(const char *rFilename, const char *htpFilename);
-    std::tuple<double *, usint, double> getMomentumAbs() const;
+    std::tuple<double *, usint, double, double, double> getMomentumAbs() const;
 };
 
 #endif // ARGON_H

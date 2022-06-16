@@ -69,10 +69,10 @@ int main(int argc, char *argv[])
     //     std::cout << *(pAbs + i) << '\n';
 
     // Calculate statistics from Maxwell-Boltzmann distribution
-    Stats R(0., 60., 25);
-    R.setInputFromArgon(pAbs, N, T, k, m);
-    R.evaluateHist();
-    R.calculateStats();
+    Stats *S = new Stats;
+    S->setInputFromArgon(pAbs, N, T, k, m);
+    S->evaluateHist(argv[7]);
+    S->calculateStats();
 
     return EXIT_SUCCESS;
 }

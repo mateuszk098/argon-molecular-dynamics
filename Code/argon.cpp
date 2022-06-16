@@ -605,11 +605,12 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
 
 /**************************************************************************************
  * This function calculates absolute value of momentum for every particle.
- * @return std::tuple<double *, usint, double> - where the first parameter is a pointer
- * to array with the absolute momentum values, the second is the size of this array,
- * and the last is the temperature related to this state.
+ * @return std::tuple<double *, usint, double, double, double> - where the first
+ * parameter is a pointer to array with the absolute momentum values, the second is the
+ * size of this array, third is the temperature related to this calculated state, fourth
+ * is the Boltzmann constant and the fifth is the particle mass.
  *************************************************************************************/
-std::tuple<double *, usint, double> Argon::getMomentumAbs() const
+std::tuple<double *, usint, double, double, double> Argon::getMomentumAbs() const
 {
     double *pAbs = new double[N];
 
@@ -623,7 +624,7 @@ std::tuple<double *, usint, double> Argon::getMomentumAbs() const
         pAbs[i] = sqrt(pAbs[i]);
     }
 
-    return std::make_tuple(pAbs, N, T);
+    return std::make_tuple(pAbs, N, T, k, m);
 }
 
 /**************************************************************************************

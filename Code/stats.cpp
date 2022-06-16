@@ -5,55 +5,28 @@
 #include <iomanip>
 #include <cmath>
 #include <sstream>
+#include <fstream>
 
-Stats::Stats() : low(0), up(0), underflow(0), overflow(0), bins(0)
+Stats::Stats() : low(0.), up(0.), underflow(0), overflow(0), bins(0), maxStarsIndex(0), maxStars(0),
+                 distributionMean(0.), distributionMeanSq(0.), distributionSigma(0.), N(0), T(0.), k(0.), m(0.),
+                 pProEmp(0.), pMeanEmp(0.), pMeanSqEmp(0.), pProMB(0.), pMeanMB(0.), pMeanSqMB(0.)
 {
-    binRanges = new double[0];
-    stars = new std::string[0];
-}
-
-Stats::Stats(const double &Low, const double &Up, const usint &Bins) : low(Low), up(Up), underflow(0), overflow(0), bins(Bins)
-{
-    binRanges = new double[bins + 1];
-    stars = new std::string[bins];
-}
-
-Stats::Stats(const Stats &H) : low(H.low), up(H.up), underflow(H.underflow), overflow(H.overflow), bins(H.bins)
-{
-    binRanges = new double[bins + 1];
-    stars = new std::string[bins];
+    binRanges = new double[bins + 1]();
+    stars = new std::string[bins]();
+    pAbs = new double[N]();
 }
 
 Stats::~Stats()
 {
     delete[] binRanges;
     delete[] stars;
+    delete[] pAbs;
 }
 
-void Stats::setStats(const double &Low, const double &Up, const usint &Bins)
+void Stats::evaluateHist(const char *histFilename)
 {
-    low = Low;
-    up = Low;
-    bins = Bins;
-
-    delete[] binRanges;
-    delete[] stars;
-
-    binRanges = new double[bins + 1];
-    stars = new std::string[bins];
-}
-
-void Stats::evaluateHist()
-{
-    // Evaluate histogram related to particles momentum
-    distributionMean = 0.;
-    distributionMeanSq = 0.;
-    distributionSigma = 0.;
-    maxStarsIndex = 0;
-    maxStars = 0;
-
     // Calculate range of histogram and its bins
-    const double histRange = abs(low - up);
+    const double histRange = std::abs(low - up);
     const double binRange = histRange / bins;
 
     // Set bin ranges
@@ -92,31 +65,30 @@ void Stats::evaluateHist()
     }
 
     distributionMean /= N;
-    distributionMeanSq = sqrt(distributionMeanSq / N);
+    distributionMeanSq = std::sqrt(distributionMeanSq / N);
 
     // Calculate standard deviation of momentum
     for (int i = 0; i < N; i++)
         distributionSigma += (pAbs[i] - distributionMean) * (pAbs[i] - distributionMean);
 
-    distributionSigma = sqrt(distributionSigma / N);
+    distributionSigma = std::sqrt(distributionSigma / N);
+
+    std::ofstream histOfile("../Out/" + std::string(histFilename), std::ios::out);
+    histOfile << std::fixed << std::setprecision(2); // << std::showpos
 
     // Print evaluated histogram with its basic statistics
-    std::cout << '\n';
-    std::cout << "Bins:         " << bins << '\n';
-    std::cout << "Low:          " << low << '\n';
-    std::cout << "Up:           " << up << '\n';
-    std::cout << "Underflow:    " << underflow << '\n';
-    std::cout << "Overflow:     " << overflow << '\n';
-    std::cout << "Mean:         " << distributionMean << '\n';
-    std::cout << "StdDev:       " << distributionSigma << '\n';
-    std::cout << '\n';
-
-    // Print options
-    std::cout << std::fixed << std::showpos << std::setprecision(3);
+    histOfile << "Bins:         " << bins << '\n';
+    histOfile << "Low:          " << low << '\n';
+    histOfile << "Up:           " << up << '\n';
+    histOfile << "Underflow:    " << underflow << '\n';
+    histOfile << "Overflow:     " << overflow << '\n';
+    histOfile << "Mean:         " << distributionMean << '\n';
+    histOfile << "StdDev:       " << distributionSigma << '\n';
+    histOfile << '\n';
 
     // Create caption with bin range e.g (+0.123; +0.456]:
     std::stringstream binRangeS;
-    binRangeS << std::fixed << std::showpos << std::setprecision(3);
+    binRangeS << std::fixed << std::setprecision(2); // << std::showpos
     binRangeS << "(" << binRanges[bins - 1] << "; " << binRanges[bins] << "]: ";
     // Calculate maximum length of binRangeS string
     usint captionLen = binRangeS.str().length();
@@ -126,8 +98,8 @@ void Stats::evaluateHist()
     for (int i = 0; i < bins; i++)
     {
         binRangeS << "(" << binRanges[i] << "; " << binRanges[i + 1] << "]: ";
-        std::cout << std::setw(captionLen - binRangeS.str().length() + 1) << "(" << binRanges[i] << "; " << binRanges[i + 1] << "]: ";
-        std::cout << std::setw(3) << stars[i].length() << ' ' << stars[i] << '\n';
+        histOfile << std::setw(captionLen - binRangeS.str().length() + 1) << "(" << binRanges[i] << "; " << binRanges[i + 1] << "]: ";
+        histOfile << std::setw(3) << stars[i].length() << ' ' << stars[i] << '\n';
 
         if (stars[i].length() > maxStars)
         {
@@ -137,9 +109,6 @@ void Stats::evaluateHist()
 
         binRangeS.str("");
     }
-
-    std::cout << '\n';
-    std::cout << std::resetiosflags(std::cout.flags());
 }
 
 void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, const double &TArgon, const double &KArgon, const double &MArgon)
@@ -149,18 +118,42 @@ void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, cons
     k = KArgon;
     m = MArgon;
 
-    // delete[] pAbs;
+    delete[] pAbs;
     pAbs = new double[N];
 
+    low = pAbsArgon[0];
+
     for (usint i = 0; i < N; i++)
+    {
         pAbs[i] = pAbsArgon[i];
+
+        if (pAbs[i] > up)
+        {
+            up = pAbs[i];
+        }
+        else if (pAbs[i] < low)
+        {
+            low = pAbs[i];
+        }
+    }
+
+    low = floor(std::max(low - 4., 0.));
+    up = ceil(up + 4.);
+    bins = static_cast<usint>(up - low);
+
+    delete[] binRanges;
+    binRanges = new double[bins + 1]();
+
+    delete[] stars;
+    stars = new std::string[bins]();
 }
 
 void Stats::calculateStats()
 {
-    pProMB = sqrt(2. * k * T * m);
-    pMeanMB = sqrt(8. * k * T * m / M_PI);
-    pMeanSqMB = sqrt(3. * k * T * m);
+    pProMB = std::sqrt(2. * k * T * m);
+    pMeanMB = std::sqrt(8. * k * T * m / M_PI);
+    pMeanSqMB = std::sqrt(3. * k * T * m);
+    EkMB = 3. / 2. * k * T;
 
     for (usint i = 0; i < N; i++)
     {
@@ -171,11 +164,11 @@ void Stats::calculateStats()
     }
 
     pProEmp /= maxStars;
-
     pMeanEmp = distributionMean;
     pMeanSqEmp = distributionMeanSq;
+    EkEmp = pMeanEmp * pMeanEmp / (2. * m);
 
-    std::cout << std::fixed << std::setprecision(3);
+    std::cout << std::fixed << std::setprecision(2);
     std::cout << "pProMB:       " << pProMB << '\t' << "Most probable momentum obtained analytically.\n";
     std::cout << "pProEmp:      " << pProEmp << '\t' << "Most probable momentum obtained numerically.\n";
     std::cout << "Error (%):    " << std::abs(pProEmp - pProMB) / pProMB * 100. << '\n';
@@ -186,6 +179,10 @@ void Stats::calculateStats()
     std::cout << '\n';
     std::cout << "pMeanSqMB:    " << pMeanSqMB << '\t' << "Mean square momentum obtained analytically.\n";
     std::cout << "pMeanSqEmp:   " << pMeanSqEmp << '\t' << "Mean square momentum obtained numerically.\n";
-    std::cout << "Error (%):    " << abs(pMeanSqEmp - pMeanSqMB) / pMeanSqMB * 100. << '\n';
+    std::cout << "Error (%):    " << std::abs(pMeanSqEmp - pMeanSqMB) / pMeanSqMB * 100. << '\n';
+    std::cout << '\n';
+    std::cout << "EkMB:         " << EkMB << '\t' << "Mean kinetic energy obtained analytically.\n";
+    std::cout << "EkEmp:        " << EkEmp << '\t' << "Mean kinetic energy obtained numerically.\n";
+    std::cout << "Error (%):    " << std::abs(EkEmp - EkMB) / EkMB * 100. << '\n';
     std::cout << '\n';
 }
