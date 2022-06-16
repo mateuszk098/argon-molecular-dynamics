@@ -45,7 +45,7 @@ private:
 
     double ***Fp; ///< 3D array to store interaction forces between atoms
 
-    bool initialPosMoCheck; ///< Indicates if initial state (positions and momenta) is calculated
+    bool initialStateCheck; ///< Indicates if initial state (positions and momenta) is calculated
     bool initialFoPoCheck;  ///< Indicates if initial state (forces and potentials) is calculated
     bool simulationRead;    ///< Indicates if simulation is ready to run
     std::mt19937 mt;        ///< High definition pseudo-random number generator
@@ -70,6 +70,7 @@ private:
     void saveCurrentPositions();
     void saveMeanHTP(const double &H, const double &T, const double &P);
     void printCurrentInfo(const double &time) const;
+    void saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const;
 
     std::ofstream ofileHTP;
     std::ofstream ofileMeanHTP;
@@ -81,8 +82,7 @@ public:
 
     void setParameters(const char *filename) noexcept(false);
     void checkParameters() const noexcept;
-    void initialState();
-    void saveInitialState(const char *rFilename, const char *pFilename) const;
+    void initialState(const char *rFilename, const char *pFilename, const char *htpFilename);
     void initialForces();
     void simulationLoop();
 

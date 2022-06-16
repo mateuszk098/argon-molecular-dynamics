@@ -129,7 +129,7 @@ void Argon::printCurrentInfo(const double &time) const
  * Default constructor initializes exmaple parameters and memory to store informations about the system.
  **/
 Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.), e(1.), R(0.38), k(8.31e-3),
-                          f(1e4), L(5.), a(0.38), T0(1e3), tau(1e-3), initialPosMoCheck(false),
+                          f(1e4), L(5.), a(0.38), T0(1e3), tau(1e-3), initialStateCheck(false),
                           initialFoPoCheck(false), mt(std::mt19937(time(nullptr)))
 {
     N = n * n * n; // System is defined as 3D
@@ -403,7 +403,7 @@ void Argon::checkParameters() const noexcept
 /**
  * This function calculates initial positions and momenta of atoms.
  **/
-void Argon::initialState()
+void Argon::initialState(const char *rFilename, const char *pFilename, const char *htpFilename)
 {
     // Calculate initial positions of atoms (5)
     for (usint i_0 = 0; i_0 < n; i_0++)
@@ -451,18 +451,97 @@ void Argon::initialState()
         }
     }
 
-    initialPosMoCheck = true;
-    std::cout << "`initialState()` says >: Successfully calculated initial positions and momenta of atoms.\n\n";
+    // Calculate initial forces and potentials affecting to atoms
+    V = 0.; // Total potential energy
+
+    for (usint i = 0; i < N; i++)
+    {
+        // Absolute value of r_i -> |r_i|
+        double r_i = sqrt(r0[i][0] * r0[i][0] + r0[i][1] * r0[i][1] + r0[i][2] * r0[i][2]);
+
+        // (10)
+        if (r_i < L)
+            Vs[i] = 0.;
+        else if (r_i >= L)
+            Vs[i] = 0.5 * f * (r_i - L) * (r_i - L);
+
+        // Accumulate potential related to sphere walls to total potential
+        V += Vs[i];
+
+        // (14)
+        for (usint j = 0; j < K; j++)
+        {
+            if (r_i < L)
+                Fs[i][j] = 0.;
+            else if (r_i >= L)
+                Fs[i][j] = f * (L - r_i) * r0[i][j] / r_i;
+
+            // Accumulate repulsive forces related to sphere walls to total forces
+            Fi[i][j] = Fs[i][j];
+        }
+
+        // (9) and (13)
+        for (usint j = 0; j < i; j++)
+        {
+            // Absolute value of r_i - r_j -> |r_i - r_j|
+            double r_ij = sqrt((r0[i][0] - r0[j][0]) * (r0[i][0] - r0[j][0]) + (r0[i][1] - r0[j][1]) * (r0[i][1] - r0[j][1]) +
+                               (r0[i][2] - r0[j][2]) * (r0[i][2] - r0[j][2]));
+
+            // Local variables to evaluate powers -> huge increase of performance (instead of calculate with common pow())
+            double y = (R / r_ij) * (R / r_ij);
+            double x = y * y * y;
+            // (9)
+            Vp[i][j] = e * x * (x - 2.);
+
+            for (usint k = 0; k < K; k++)
+            {
+                // Fp is not required as 3D array, we may use just ordinary variable but with Fp is more evident
+                // what is happens here
+                Fp[i][j][k] = 12. * e * x * (x - 1.) * (r0[i][k] - r0[j][k]) / (r_ij * r_ij);
+
+                // Symmetry of forces matrix (only one triangular matrix needs to be calculated) -> increase performance
+                Fi[i][k] += Fp[i][j][k];
+                Fi[j][k] -= Fp[i][j][k];
+            }
+
+            // Accumulate van der Waals potentials
+            V += Vp[i][j];
+        }
+    }
+
+    // Prepare to accumulate physical parameters at initial time
+    H = V; // At this moment Hamiltonian is just total potential
+    T = 0.;
+    P = 0.;
+    Ek = 0.;
+
+    for (usint i = 0; i < N; i++)
+    {
+        // Local variable to increase performance;
+        Ek = (p0[i][0] * p0[i][0] + p0[i][1] * p0[i][1] + p0[i][2] * p0[i][2]) / (2. * m);
+
+        // Accumulate physical parameters
+        H += Ek;
+        T += 2. / (3. * N * k) * Ek;
+        P += sqrt(Fs[i][0] * Fs[i][0] + Fs[i][1] * Fs[i][1] + Fs[i][2] * Fs[i][2]) / (4. * M_PI * L * L);
+    }
+
+    initialStateCheck = true;
+    saveInitialState(rFilename, pFilename, htpFilename);
+
+    std::cout << "`initialState()` says >: Successfully calculated and saved initial state.\n\n";
 }
 
 /** This function saves initial state to given files.
  * @param char* filename where to save initial positions,
- * @param char* filename where to save initial momenta.
+ * @param char* filename where to save initial momenta,
+ * @param char* filename where to save initial H, T and P.
  **/
-void Argon::saveInitialState(const char *rFilename, const char *pFilename) const
+void Argon::saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const
 {
     std::ofstream rOut("../Out/" + std::string(rFilename), std::ios::out);
     std::ofstream pOut("../Out/" + std::string(pFilename), std::ios::out);
+    std::ofstream htpOut("../Out/" + std::string(htpFilename), std::ios::out);
 
     // Number of atoms in header to read by Jmol
     rOut << N << "\n\n";
@@ -484,20 +563,17 @@ void Argon::saveInitialState(const char *rFilename, const char *pFilename) const
         pOut << '\n';
     }
 
+    // Header with physical parameters
+    htpOut << std::fixed << std::setprecision(5);
+    htpOut << "t (ps)\t";
+    htpOut << "H (kJ/mol)\t";
+    htpOut << "T (K)\t";
+    htpOut << "P (atm)\n";
+    htpOut << 0 << '\t' << H << '\t' << T << '\t' << P << '\n';
+
     rOut.close();
     pOut.close();
-
-    if (initialPosMoCheck == false)
-    {
-        std::cout << "`saveInitialState()` says >: Warning - did not calculate initial state!" << '\n';
-        std::cout << "`saveInitialState()` says >: Warning - saved default values to ../Out/";
-        std::cout << rFilename << " and ../Out/" << pFilename << "\n\n";
-    }
-    else
-    {
-        std::cout << "`saveInitialState()` says >: Successfully saved initial positions and momenta to ../Out/";
-        std::cout << rFilename << " and ../Out/" << pFilename << "\n\n";
-    }
+    htpOut.close();
 }
 
 /**
@@ -579,7 +655,7 @@ void Argon::initialForces()
 
 void Argon::simulationLoop()
 {
-    if (initialPosMoCheck == true && initialFoPoCheck == true)
+    if (initialStateCheck == true && initialFoPoCheck == true)
     {
         std::cout << "`simulationLoop()` says >: System is ready to simulation.\n\n";
 

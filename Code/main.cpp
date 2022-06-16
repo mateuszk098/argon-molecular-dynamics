@@ -36,12 +36,12 @@ int main(int argc, char *argv[])
     // It is only to information if system is properly set.
     A->checkParameters();
     // Call function `initialState()` is required if you want to get to simulation.
-    A->initialState();
+    A->initialState(argv[2], argv[3], argv[4]);
     // Call function `saveInitialState()` is optional, but required if you want
     // to see the system in the Jmol.
-    A->saveInitialState(argv[2], argv[3]);
+    // A->saveInitialState(argv[2], argv[3]);
     // Call function `initialForces()` is required if you wan to get to simulation.
-    A->initialForces();
+    // A->initialForces();
     std::tie(pAbs, N) = A->getMomentumAbs();
     // Call function `simulationLoop()` is optional.
     // But obviously it is the core of entertainment and playing with the system.
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     // for (int i = 0; i < N; i++)
     //     std::cout << *(pAbs + i) << '\n';
 
-    Stats R(0., 30.,25);
+    Stats R(0., 30., 25);
     R.printStats(pAbs, N);
 
     return EXIT_SUCCESS;
