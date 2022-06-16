@@ -1,7 +1,3 @@
-// Compile this: c++ @flags.inp
-// Run this: ./main parameters.txt r0_init.txt p0_init.txt htp_init.txt rt_sim.txt htp_sim.txt
-// Or compile and run: c++ @flags.inp && ./main parameters.txt r0_init.txt p0_init.txt htp_init.txt rt_sim.txt htp_sim.txt
-
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Simulation of Argon Gas. That is a molecular dynamics      *
  * simulation for a gas interacting with van der Waals        *
@@ -10,6 +6,11 @@
  * Author: Mateusz Kowalczyk                                  *
  * Date: 12.06.2022                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
+
+// Compile this: c++ @flags.inp
+// Run this: ./main parameters.txt r0_init.txt p0_init.txt htp_init.txt rt_sim.txt htp_sim.txt
+// Or compile and run:
+// c++ @flags.inp && ./main parameters.txt r0_init.txt p0_init.txt htp_init.txt rt_sim.txt htp_sim.txt
 
 #include "argon.h"
 #include "stats.h"
