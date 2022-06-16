@@ -41,9 +41,9 @@ void Stats::setStats(const double &Low, const double &Up, const usint &Bins)
     stars = new std::string[bins];
 }
 
-void Stats::printStats(const double *Values, const usint &Size)
+void Stats::printStats()
 {
-    calculate(Values, Size);
+    calculate();
 
     std::cout << '\n';
     std::cout << "Bins:         " << bins << '\n';
@@ -71,10 +71,10 @@ void Stats::printStats(const double *Values, const usint &Size)
         ss.str("");
     }
 
-    std::cout << sqrt(2. * 8.31e-3 * 200. / (40.)) * 40.;
+    std::cout << sqrt(2. * 8.31e-3 * T / (40.)) * 40.;
 }
 
-void Stats::calculate(const double *Values, const usint &Size)
+void Stats::calculate()
 {
     distributionMean = 0.;
     distributionSigma = 0.;
@@ -88,17 +88,17 @@ void Stats::calculate(const double *Values, const usint &Size)
     for (int i = 1; i < bins; i++)
         *(binRanges + i) = *(binRanges + i - 1) + binRange;
 
-    for (int i = 0; i < Size; i++)
+    for (int i = 0; i < N; i++)
     {
-        if (*(Values + i) < low)
+        if (*(pAbs + i) < low)
             ++underflow;
-        else if (*(Values + i) > up)
+        else if (*(pAbs + i) > up)
             ++overflow;
         else
         {
             for (int j = 0; j < bins; j++)
             {
-                if (*(Values + i) > *(binRanges + j) && (*(Values + i) <= *(binRanges + j + 1)))
+                if (*(pAbs + i) > *(binRanges + j) && (*(pAbs + i) <= *(binRanges + j + 1)))
                 {
                     *(stars + j) += '*';
                     break;
@@ -106,13 +106,25 @@ void Stats::calculate(const double *Values, const usint &Size)
             }
         }
 
-        distributionMean += *(Values + i);
+        distributionMean += *(pAbs + i);
     }
 
-    distributionMean /= Size;
+    distributionMean /= N;
 
-    for (int i = 0; i < Size; i++)
-        distributionSigma += (*(Values + i) - distributionMean) * (*(Values + i) - distributionMean);
+    for (int i = 0; i < N; i++)
+        distributionSigma += (*(pAbs + i) - distributionMean) * (*(pAbs + i) - distributionMean);
 
-    distributionSigma = sqrt(distributionSigma / Size);
+    distributionSigma = sqrt(distributionSigma / N);
+}
+
+void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, const double &TArgon)
+{
+    N = NArgon;
+    T = TArgon;
+
+    //delete[] pAbs;
+    pAbs = new double[N];
+
+    for (usint i = 0; i < N; i++)
+        pAbs[i] = pAbsArgon[i];
 }

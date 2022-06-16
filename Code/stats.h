@@ -17,7 +17,11 @@ private:
     double distributionMean;
     double distributionSigma;
 
-    void calculate(const double *Values, const usint &Size);
+    void calculate();
+
+    double *pAbs;
+    usint N;
+    double T;
 
 public:
     Stats();
@@ -26,7 +30,8 @@ public:
     ~Stats();
 
     void setStats(const double &Low, const double &Up, const usint &Bins);
-    void printStats(const double *Values, const usint &Size);
+    void printStats();
+    void setInputFromArgon(const double *pAbs, const usint &N, const double &T);
 };
 
 #endif // STATS_H
