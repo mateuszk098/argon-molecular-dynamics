@@ -1,4 +1,6 @@
+#define _USE_MATH_DEFINES
 #include "stats.h"
+#include <cmath>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -41,10 +43,59 @@ void Stats::setStats(const double &Low, const double &Up, const usint &Bins)
     stars = new std::string[bins];
 }
 
-void Stats::printStats()
+void Stats::evaluateHist()
 {
-    calculate();
+    // Evaluate histogram related to particles momentum
+    distributionMean = 0.;
+    distributionSigma = 0.;
 
+    // Calculate range of histogram and its bins
+    const double histRange = abs(low - up);
+    const double binRange = histRange / bins;
+
+    // Set bin ranges
+    binRanges[0] = low;
+    binRanges[bins] = up;
+
+    for (int i = 1; i < bins; i++)
+        binRanges[i] = binRanges[i - 1] + binRange;
+
+    // Count how many particles are in the specific momentum range
+    for (int i = 0; i < N; i++)
+    {
+        if (pAbs[i] < low)
+        {
+            ++underflow;
+        }
+        else if (pAbs[i] > up)
+        {
+            ++overflow;
+        }
+        else
+        {
+            for (int j = 0; j < bins; j++)
+            {
+                if (pAbs[i] > binRanges[j] && pAbs[i] <= binRanges[j + 1])
+                {
+                    stars[j] += '*';
+                    break;
+                }
+            }
+        }
+
+        // Accumulate momentum to calculate distribution mean value
+        distributionMean += pAbs[i];
+    }
+
+    distributionMean /= N;
+
+    // Calculate standard deviation of momentum
+    for (int i = 0; i < N; i++)
+        distributionSigma += (pAbs[i] - distributionMean) * (pAbs[i] - distributionMean);
+
+    distributionSigma = sqrt(distributionSigma / N);
+
+    // Print evaluated histogram with its basic statistics
     std::cout << '\n';
     std::cout << "Bins:         " << bins << '\n';
     std::cout << "Low:          " << low << '\n';
@@ -54,75 +105,38 @@ void Stats::printStats()
     std::cout << "Mean:         " << distributionMean << '\n';
     std::cout << "StdDev:       " << distributionSigma << '\n';
     std::cout << '\n';
+
+    // Print options
     std::cout << std::fixed << std::showpos << std::setprecision(3);
 
-    std::stringstream ss;
-    ss << std::fixed << std::showpos << std::setprecision(3);
-    ss << "(" << *(binRanges + bins - 1) << "; " << *(binRanges + bins) << "]: ";
-    usint ssSize = ss.str().length();
-    ss.str("");
+    // Create caption with bin range e.g (+0.123; +0.456]:
+    std::stringstream binRangeS;
+    binRangeS << std::fixed << std::showpos << std::setprecision(3);
+    binRangeS << "(" << binRanges[bins - 1] << "; " << binRanges[bins] << "]: ";
+    // Calculate maximum length of binRangeS string
+    usint captionLen = binRangeS.str().length();
+    binRangeS.str("");
 
+    // Print histogram of particles momentum
     for (int i = 0; i < bins; i++)
     {
-        ss << "(" << *(binRanges + i) << "; " << *(binRanges + i + 1) << "]: ";
-        // std::cout << ssSize - ss.str().length() << '\n';
-        std::cout << std::setw(ssSize - ss.str().length() + 1) << "(" << *(binRanges + i) << "; " << *(binRanges + i + 1) << "]: ";
-        std::cout << std::setw(3) << (*(stars + i)).length() << "  " << *(stars + i) << '\n';
-        ss.str("");
+        binRangeS << "(" << binRanges[i] << "; " << binRanges[i + 1] << "]: ";
+        std::cout << std::setw(captionLen - binRangeS.str().length() + 1) << "(" << binRanges[i] << "; " << binRanges[i + 1] << "]: ";
+        std::cout << std::setw(3) << stars[i].length() << ' ' << stars[i] << '\n';
+        binRangeS.str("");
     }
 
-    std::cout << sqrt(2. * 8.31e-3 * T / (40.)) * 40.;
+    // std::cout << sqrt(8. * k * T / (M_PI * m)) * m;
 }
 
-void Stats::calculate()
-{
-    distributionMean = 0.;
-    distributionSigma = 0.;
-
-    const double histRange = abs(low - up);
-    const double binRange = histRange / bins;
-
-    *(binRanges) = low;
-    *(binRanges + bins) = up;
-
-    for (int i = 1; i < bins; i++)
-        *(binRanges + i) = *(binRanges + i - 1) + binRange;
-
-    for (int i = 0; i < N; i++)
-    {
-        if (*(pAbs + i) < low)
-            ++underflow;
-        else if (*(pAbs + i) > up)
-            ++overflow;
-        else
-        {
-            for (int j = 0; j < bins; j++)
-            {
-                if (*(pAbs + i) > *(binRanges + j) && (*(pAbs + i) <= *(binRanges + j + 1)))
-                {
-                    *(stars + j) += '*';
-                    break;
-                }
-            }
-        }
-
-        distributionMean += *(pAbs + i);
-    }
-
-    distributionMean /= N;
-
-    for (int i = 0; i < N; i++)
-        distributionSigma += (*(pAbs + i) - distributionMean) * (*(pAbs + i) - distributionMean);
-
-    distributionSigma = sqrt(distributionSigma / N);
-}
-
-void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, const double &TArgon)
+void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, const double &TArgon, const double &KArgon, const double &MArgon)
 {
     N = NArgon;
     T = TArgon;
+    k = KArgon;
+    m = MArgon;
 
-    //delete[] pAbs;
+    // delete[] pAbs;
     pAbs = new double[N];
 
     for (usint i = 0; i < N; i++)
