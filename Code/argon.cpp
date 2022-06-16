@@ -6,12 +6,14 @@
 #include <string>
 #include <iomanip>
 
-/**
- * Default constructor initializes exmaple parameters and memory to store informations about the system.
- **/
-Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.), e(1.), R(0.38), k(8.31e-3),
-                          f(1e4), L(5.), a(0.38), T0(1e3), tau(1e-3), initialStateCheck(false),
-                          initialFoPoCheck(false), mt(std::mt19937(time(nullptr)))
+/**************************************************************************************
+ * Default constructor initializes exmaple parameters and memory to store informations
+ * about the system. It also prints appropriate messages.
+ * @return Nothing to return.
+ *************************************************************************************/
+Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.), e(1.),
+                          R(0.38), k(8.31e-3), f(1e4), L(5.), a(0.38), T0(1e3), tau(1e-3),
+                          initialStateCheck(false), mt(std::mt19937(time(nullptr)))
 {
     N = n * n * n; // System is defined as 3D
     K = 3;
@@ -51,12 +53,13 @@ Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.),
             Fp[i][j] = new double[K]();
     }
 
-    std::cout << "`Argon()` says >: Allocated memory for buffors.\n\n";
+    std::cout << "`Argon()` says >: Allocated memory for buffer.\n\n";
 }
 
-/**
- * Destructor frees up buffers memory.
- **/
+/**************************************************************************************
+ * Destructor frees up buffer memory and print appropriate message about it.
+ * @return Nothing to return.
+ **************************************************************************************/
 Argon::~Argon() noexcept
 {
     delete[] b0;
@@ -91,11 +94,14 @@ Argon::~Argon() noexcept
     std::cout << "`~Argon() says >: Memory released.\n\n";
 }
 
-/**
+/**************************************************************************************
  * This function reads parameters from input file and sets appropriate variables.
- * Moreover it provides exception handling for invalid parameters and files.
+ * Then it reallocates required memory for buffer. Moreover it provides exception
+ * handling for invalid parameters and files. If something has gone wrong, then
+ * the function set default parameters and print appropriate message.
  * @param char* filename with parameters to set.
- **/
+ * @return Nothing to return.
+ *************************************************************************************/
 void Argon::setParameters(const char *filename) noexcept(false)
 {
     std::ifstream input;
@@ -215,7 +221,7 @@ void Argon::setParameters(const char *filename) noexcept(false)
     catch (const std::invalid_argument &error)
     {
         // Notice I do not need to reallocate memory because of default parameters
-        // and buffors have the same sizes
+        // and buffer have the same sizes
         n = 7;
         So = 100;
         Sd = 10000;
@@ -258,9 +264,25 @@ void Argon::setParameters(const char *filename) noexcept(false)
     }
 }
 
-/**
- * This function prints all currently set parameters.
- **/
+/**************************************************************************************
+ * This function prints all currently set parameters. Notice that the section
+ * parameters is only for the information of printed parameters.
+ * This function DOES NOT accept parameters.
+ * @param usint n     // Number of atoms along the crystal edge
+ * @param usint So    // Thermalisation steps
+ * @param usint Sout  // Save informations about the system every \p`Sout` steps
+ * @param usint Sxyz  // Save positions of atoms every `Sxyz` steps
+ * @param double m    // Mass of the single atom
+ * @param double e    // Minimum of the potential
+ * @param double R    // Interatomic distance for which occurs minimum of the potential
+ * @param double k    // Boltzmann constant
+ * @param double f    // Elastic coefficient
+ * @param double L    // Radius of sphere which confines atoms
+ * @param double a    // Interatomic distance
+ * @param double T0   // Initial temperature
+ * @param double tau  // Integration step
+ * @return Nothing to return.
+ **************************************************************************************/
 void Argon::checkParameters() const noexcept
 {
     std::cout << "`checkParameters()` says >: Currently set parameters." << '\n';
@@ -272,25 +294,28 @@ void Argon::checkParameters() const noexcept
     std::cout << "`checkParameters()` says >: f:        " << f << '\n';
     std::cout << "`checkParameters()` says >: L:        " << L << '\n';
     std::cout << "`checkParameters()` says >: a:        " << a << '\n';
-    std::cout << "`checkParameters()` says >: T_0:      " << T0 << '\n';
+    std::cout << "`checkParameters()` says >: T0:       " << T0 << '\n';
     std::cout << "`checkParameters()` says >: tau:      " << tau << '\n';
     std::cout << "`checkParameters()` says >: So:       " << So << '\n';
     std::cout << "`checkParameters()` says >: Sd:       " << Sd << '\n';
-    std::cout << "`checkParameters()` says >: S_out:    " << Sout << '\n';
+    std::cout << "`checkParameters()` says >: Sout:     " << Sout << '\n';
     std::cout << "`checkParameters()` says >: Sxyz:     " << Sxyz << '\n';
     std::cout << "`checkParameters()` says >: End of parameters.\n\n";
 }
 
-/***************************************************************************************************
- * This function calculates initial positions, momenta, forces and potentials acting on atoms in
- * initial state. Primarily we calculate there the trapping potentials, repulsion related to sphere
- * walls, total forces impact to particles, van der Waals interactions, interaction forces between
- * atoms and total potential. Next that function calculates total energy (Hamiltonian), initial real
- * temperature (T) and initial pressure related to sphere walls.
+/**************************************************************************************
+ * This function calculates initial positions, momenta, forces and potentials acting on
+ * atoms in initial state. Primarily we calculate there the trapping potentials,
+ * repulsion related to sphere walls, total forces impact to particles, van der Waals
+ * interactions, interaction forces between atoms and total potential. Next that
+ * function calculates total energy (Hamiltonian), initial real temperature (T) and
+ * initial pressure related to sphere walls. Finally it saves all needed informations
+ * to the given files.
  * @param char* filename where to save initial positions,
  * @param char* filename where to save initial momenta,
  * @param char* filename where to save initial H, T and P.
- **************************************************************************************************/
+ * @return Nothing to return.
+ **************************************************************************************/
 void Argon::initialState(const char *rFilename, const char *pFilename, const char *htpFilename)
 {
     // Calculate initial positions of atoms (5)
@@ -419,6 +444,18 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
     std::cout << "`initialState()` says >: Successfully calculated and saved initial state.\n\n";
 }
 
+/**************************************************************************************
+ * This function carries out the dynamics of the whole simulation. Primarily it
+ * calculates required positions, momenta, forces and potentials acting on atoms at
+ * given moment in time. Similarly as in the initial state, we calculate here
+ * the trapping potentials, repulsion related to sphere walls, total forces impact to
+ * particles, van der Waals interactions, interaction forces between atoms and total
+ * potential. Next that function calculates total energy (Hamiltonian), real temperature
+ * (T) and pressure (P) related to sphere walls.
+ * @param char* filename where to save current positions,
+ * @param char* filename where to save current H, T and P.
+ * @return Nothing to return.
+ *************************************************************************************/
 void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
 {
     if (initialStateCheck == true)
@@ -566,7 +603,13 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
     }
 }
 
-std::tuple<double *, usint> Argon::getMomentumAbs() const
+/**************************************************************************************
+ * This function calculates absolute value of momentum for every particle.
+ * @return std::tuple<double *, usint, double> - where the first parameter is a pointer
+ * to array with the absolute momentum values, the second is the size of this array,
+ * and the last is the temperature related to this state.
+ *************************************************************************************/
+std::tuple<double *, usint, double> Argon::getMomentumAbs() const
 {
     double *pAbs = new double[N];
 
@@ -580,13 +623,14 @@ std::tuple<double *, usint> Argon::getMomentumAbs() const
         pAbs[i] = sqrt(pAbs[i]);
     }
 
-    return std::make_tuple(pAbs, N);
+    return std::make_tuple(pAbs, N, T);
 }
 
-/**
- * This function calculates current Hamiltonian, Temperature and Pressure
- * of the system. It uses current momenta and sphere repulsion to this.
- **/
+/**************************************************************************************
+ * This function calculates current Hamiltonian, Temperature and Pressure of the
+ * system. It uses current momenta and sphere repulsion to this.
+ * @return Calculates Hamiltonian, Temperature and Pressure of the system.
+ *************************************************************************************/
 void Argon::calculateCurrentHTP()
 {
     // Prepare to accumulate physical parameters at initial time
@@ -607,20 +651,22 @@ void Argon::calculateCurrentHTP()
     }
 }
 
-/**
+/**************************************************************************************
  * Writes to file current time, Hamiltonian, Temperature and Pressure of the system.
  * @param double current time,
  * @param ofstream file where to save current H, T and P.
- **/
+ * @return Set subsequent lines with current time, H, T and P in the given file.
+ *************************************************************************************/
 inline void Argon::saveCurrentHTP(const double &time, std::ofstream &ofileHtp)
 {
     ofileHtp << time << '\t' << H << '\t' << T << '\t' << P << '\n';
 }
 
-/**
+/**************************************************************************************
  * Writes to file current positions of the atoms.
  * @param ofstream file where to save current positions.
- **/
+ * @return Set subsequent positions of particles in the given file.
+ *************************************************************************************/
 void Argon::saveCurrentPositions(std::ofstream &ofileRt)
 {
     // Number of atoms to read by Jmol
@@ -639,11 +685,13 @@ void Argon::saveCurrentPositions(std::ofstream &ofileRt)
     ofileRt << '\n';
 }
 
-/** This function saves initial state to given files.
+/**************************************************************************************
+ * This function saves initial state to the given files.
  * @param char* filename where to save initial positions,
  * @param char* filename where to save initial momenta,
  * @param char* filename where to save initial H, T and P.
- **/
+ * @return Set appropriate positions, momenta and H, T, P in given files.
+ *************************************************************************************/
 void Argon::saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const
 {
     std::ofstream rOut("../Out/" + std::string(rFilename), std::ios::out);
@@ -683,19 +731,21 @@ void Argon::saveInitialState(const char *rFilename, const char *pFilename, const
     htpOut.close();
 }
 
-/**
+/**************************************************************************************
  * Checks if the input file is empty.
  * @param ifstream input.
- **/
+ * @return True if file is empty, otherwise false.
+ *************************************************************************************/
 inline bool Argon::fileIsEmpty(std::ifstream &input) const
 {
     return input.peek() == std::ifstream::traits_type::eof();
 }
 
-/**
- * Print current information about the system while simulation is in progress.
+/**************************************************************************************
+ * Print current informations about the system while simulation is in progress.
  * @param double current time.
- **/
+ * @return Prints current informations.
+ *************************************************************************************/
 void Argon::printCurrentInfo(const double &time) const
 {
     std::cout << std::fixed << std::setprecision(5);

@@ -1,5 +1,6 @@
-// Compile this:
-// c++ @flags.inp && ./main parameters.txt r0_data.txt p0_data.txt
+// Compile this: c++ @flags.inp
+// Run this: ./main parameters.txt r0_init.txt p0_init.txt htp_init.txt rt_sim.txt htp_sim.txt
+// Or compile and run: c++ @flags.inp && ./main parameters.txt r0_init.txt p0_init.txt htp_init.txt rt_sim.txt htp_sim.txt
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Simulation of Argon Gas. That is a molecular dynamics      *
@@ -17,14 +18,22 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 4)
+    if (argc < 7)
     {
-        std::cerr << "Usage: ./main <parameters_input> <r0_output> <p0_output>";
+        std::cerr << "Usage: ./main <1> <2> <3> <4> <5> <6>\n";
+        std::cerr << "Where:\n";
+        std::cerr << "<1> - input file with parameters in `Config` folder e.g. parameters.txt\n";
+        std::cerr << "<2> - output file with initial positions to save in `Out` folder e.g. r0_init.txt\n";
+        std::cerr << "<3> - output file with initial H, T, P to save in `Out` folder e.g. htp_init.txt\n";
+        std::cerr << "<4> - output file with initial momenta to save in `Out` folder e.g. p0_init.txt\n";
+        std::cerr << "<5> - output file with positions from the whole simulation to save in `Out` folder e.g. rt_sim.txt\n";
+        std::cerr << "<6> - output file with H, T and P from the whole simulation to save in `Out` folder e.g. htp_sim.txt\n";
         exit(1);
     }
 
     double *pAbs;
     usint N;
+    double T;
 
     std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
     // --------------------------------------
@@ -37,7 +46,9 @@ int main(int argc, char *argv[])
     A->checkParameters();
     // Call function `initialState()` is required if you want to get to simulation.
     A->initialState(argv[2], argv[3], argv[4]);
-    std::tie(pAbs, N) = A->getMomentumAbs();
+    // Get absolute values of momenta, its size and calculated temperature
+    // is required if you want to calculate statistics.
+    std::tie(pAbs, N, T) = A->getMomentumAbs();
     // Call function `simulateDynamics()` is optional.
     // But obviously it is the core of entertainment and playing with the system.
     A->simulateDynamics(argv[5], argv[6]);
@@ -45,11 +56,12 @@ int main(int argc, char *argv[])
     // --------------------------------------
     std::chrono::high_resolution_clock::time_point tk = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> ms_double(tk - tp);
-    std::cout << "Execution time on CPU: " << ms_double.count() << " ms.";
+    std::cout << "`main()` says >: Argon execution time on CPU: " << ms_double.count() << " ms.\n";
 
     // for (int i = 0; i < N; i++)
     //     std::cout << *(pAbs + i) << '\n';
 
+    // Calculate statistics from Maxwell-Boltzmann distribution
     Stats R(0., 30., 25);
     R.printStats(pAbs, N);
 

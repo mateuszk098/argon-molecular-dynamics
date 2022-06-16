@@ -34,7 +34,7 @@ private:
     double *b1; ///< Second egde (width) of elementary crystal cell
     double *b2; ///< Third egde (depth) of elementary crystal cell
 
-    double *p;  ///< 1D array to store sum of momentum
+    double *p;  ///< 1D array to store sum of momentum in each axis
     double *Vs; ///< 1D array to store trapping potentials
 
     double **r0; ///< 2D array to store atoms positions
@@ -45,9 +45,7 @@ private:
 
     double ***Fp; ///< 3D array to store interaction forces between atoms
 
-    bool initialStateCheck; ///< Indicates if initial state (positions and momenta) is calculated
-    bool initialFoPoCheck;  ///< Indicates if initial state (forces and potentials) is calculated
-    bool simulationRead;    ///< Indicates if simulation is ready to run
+    bool initialStateCheck; ///< Indicates if initial state is calculated
     std::mt19937 mt;        ///< High definition pseudo-random number generator
 
     // Physical parameters related to system
@@ -77,7 +75,7 @@ public:
     void checkParameters() const noexcept;
     void initialState(const char *rFilename, const char *pFilename, const char *htpFilename);
     void simulateDynamics(const char *rFilename, const char *htpFilename);
-    std::tuple<double *, usint> getMomentumAbs() const;
+    std::tuple<double *, usint, double> getMomentumAbs() const;
 };
 
 #endif // ARGON_H
