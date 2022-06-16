@@ -57,8 +57,9 @@ int main(int argc, char *argv[])
 
     // Call function `simulateDynamics()` is optional.
     // But obviously it is the core of entertainment and playing with the system.
-    // A->simulateDynamics(argv[5], argv[6]);
+    A->simulateDynamics(argv[5], argv[6]);
 
+    // Do not forget to release memory
     delete A;
     // --------------------------------------
     std::chrono::high_resolution_clock::time_point tk = std::chrono::high_resolution_clock::now();

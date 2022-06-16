@@ -8,8 +8,9 @@
 #include <fstream>
 
 Stats::Stats() : low(0.), up(0.), underflow(0), overflow(0), bins(0), maxStarsIndex(0), maxStars(0),
-                 distributionMean(0.), distributionMeanSq(0.), distributionSigma(0.), N(0), T(0.), k(0.), m(0.),
-                 pProEmp(0.), pMeanEmp(0.), pMeanSqEmp(0.), pProMB(0.), pMeanMB(0.), pMeanSqMB(0.)
+                 distributionMean(0.), distributionMeanSq(0.), distributionSigma(0.), N(0), T(0.), k(0.),
+                 m(0.), pProEmp(0.), pMeanEmp(0.), pMeanSqEmp(0.), pProMB(0.), pMeanMB(0.), pMeanSqMB(0.),
+                 EkEmp(0.), EkMB(0.)
 {
     binRanges = new double[bins + 1]();
     stars = new std::string[bins]();
