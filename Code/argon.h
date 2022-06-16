@@ -57,24 +57,17 @@ private:
     double P;  ///< Pressure of the system at a given moment in time
     double Ek; ///< Kinetic energy at a given moment in time
 
-    // Mean values of physical parameters
+    // Mean values of physical parameters4
     double Hmean; ///< Mean Hamiltonian
     double Tmean; ///< Mean Temperature
     double Pmean; ///< Mean Pressure
 
-    bool fileIsEmpty(std::ifstream &input) const;
-    void prepareFiles();
-    void closeFiles();
     void calculateCurrentHTP();
-    void saveCurrentHTP(const double &time);
-    void saveCurrentPositions();
-    void saveMeanHTP(const double &H, const double &T, const double &P);
-    void printCurrentInfo(const double &time) const;
+    void saveCurrentHTP(const double &time, std::ofstream &ofileHtp);
+    void saveCurrentPositions(std::ofstream &ofileRt);
     void saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const;
-
-    std::ofstream ofileHTP;
-    std::ofstream ofileMeanHTP;
-    std::ofstream ofileRt;
+    bool fileIsEmpty(std::ifstream &input) const;
+    void printCurrentInfo(const double &time) const;
 
 public:
     Argon() noexcept;
@@ -83,9 +76,7 @@ public:
     void setParameters(const char *filename) noexcept(false);
     void checkParameters() const noexcept;
     void initialState(const char *rFilename, const char *pFilename, const char *htpFilename);
-    void initialForces();
-    void simulationLoop();
-
+    void simulateDynamics(const char *rFilename, const char *htpFilename);
     std::tuple<double *, usint> getMomentumAbs() const;
 };
 

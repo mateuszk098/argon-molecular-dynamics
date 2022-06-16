@@ -37,15 +37,10 @@ int main(int argc, char *argv[])
     A->checkParameters();
     // Call function `initialState()` is required if you want to get to simulation.
     A->initialState(argv[2], argv[3], argv[4]);
-    // Call function `saveInitialState()` is optional, but required if you want
-    // to see the system in the Jmol.
-    // A->saveInitialState(argv[2], argv[3]);
-    // Call function `initialForces()` is required if you wan to get to simulation.
-    // A->initialForces();
     std::tie(pAbs, N) = A->getMomentumAbs();
-    // Call function `simulationLoop()` is optional.
+    // Call function `simulateDynamics()` is optional.
     // But obviously it is the core of entertainment and playing with the system.
-    // A->simulationLoop();
+    A->simulateDynamics(argv[5], argv[6]);
     delete A;
     // --------------------------------------
     std::chrono::high_resolution_clock::time_point tk = std::chrono::high_resolution_clock::now();

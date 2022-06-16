@@ -7,125 +7,6 @@
 #include <iomanip>
 
 /**
- * Checks if the input file is empty.
- **/
-inline bool Argon::fileIsEmpty(std::ifstream &input) const
-{
-    return input.peek() == std::ifstream::traits_type::eof();
-}
-
-/**
- * This function opens and prepares files to write information about system
- * and current positions of atoms.
- **/
-void Argon::prepareFiles()
-{
-    ofileHTP.open("../Out/HTP.txt", std::ios::out);
-    ofileHTP << std::fixed << std::setprecision(5);
-    ofileHTP << "t (ps)\t";
-    ofileHTP << "H (kJ/mol)\t";
-    ofileHTP << "T (K)\t";
-    ofileHTP << "P (atm)\n";
-
-    ofileRt.open("../Out/rt_data.txt", std::ios::out);
-    ofileRt << std::fixed << std::setprecision(3);
-}
-
-/**
- * Closes files opened by `prepareFiles()`.
- **/
-void Argon::closeFiles()
-{
-    ofileHTP.close();
-    ofileRt.close();
-}
-
-/**
- * This function calculates current Hamiltonian, Temperature and Pressure
- * of the system. It uses current momenta and sphere repulsion to this.
- **/
-void Argon::calculateCurrentHTP()
-{
-    // Prepare to accumulate physical parameters at initial time
-    H = V; // At this moment Hamiltonian is just total potential
-    T = 0.;
-    P = 0.;
-    Ek = 0.;
-
-    for (usint i = 0; i < N; i++)
-    {
-        // Local variable to increase performance;
-        Ek = (p0[i][0] * p0[i][0] + p0[i][1] * p0[i][1] + p0[i][2] * p0[i][2]) / (2. * m);
-
-        // Accumulate physical parameters
-        H += Ek;
-        T += 2. / (3. * N * k) * Ek;
-        P += sqrt(Fs[i][0] * Fs[i][0] + Fs[i][1] * Fs[i][1] + Fs[i][2] * Fs[i][2]) / (4. * M_PI * L * L);
-    }
-}
-
-/**
- * Writes to file current time, Hamiltonian, Temperature and Pressure of the system.
- **/
-inline void Argon::saveCurrentHTP(const double &time)
-{
-    ofileHTP << time << '\t' << H << '\t' << T << '\t' << P << '\n';
-}
-
-/**
- * Writes to file current positions of the atoms.
- **/
-void Argon::saveCurrentPositions()
-{
-    // Number of atoms to read by Jmol
-    ofileRt << N;
-    ofileRt << "\n\n";
-
-    for (usint i = 0; i < N; i++)
-    {
-        ofileRt << "AR ";
-
-        for (usint j = 0; j < K; j++)
-            ofileRt << r0[i][j] << ' ';
-        ofileRt << '\n';
-    }
-
-    ofileRt << '\n';
-}
-
-/**
- * Writes to file mean values of Hamiltonian, Temperature and Pressure.
- * @param double Mean Hamiltonian,
- * @param double Mean Temperature,
- * @param double Mean Pressure.
- **/
-void Argon::saveMeanHTP(const double &H, const double &T, const double &P)
-{
-    ofileMeanHTP.open("../Out/HTP-MEAN.txt", std::ios::out);
-    ofileMeanHTP << std::fixed << std::setprecision(5);
-    ofileMeanHTP << "H (kJ/mol)\t";
-    ofileMeanHTP << "T (K)\t";
-    ofileMeanHTP << "P (atm)\n";
-    ofileMeanHTP << H << '\t' << T << '\t' << P << '\n';
-    ofileMeanHTP.close();
-}
-
-/**
- * Print current information about the system while simulation is in progress.
- * @param double current time.
- **/
-void Argon::printCurrentInfo(const double &time) const
-{
-    std::cout << std::fixed << std::setprecision(5);
-    std::cout << "Current Time:             " << time << '\n';
-    std::cout << "Current Total Energy:     " << H << '\n';
-    std::cout << "Current Total Potential:  " << V << '\n';
-    std::cout << "Current Temperature:      " << T << '\n';
-    std::cout << "Current Pressure:         " << P << '\n';
-    std::cout << '\n';
-}
-
-/**
  * Default constructor initializes exmaple parameters and memory to store informations about the system.
  **/
 Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.), e(1.), R(0.38), k(8.31e-3),
@@ -400,9 +281,16 @@ void Argon::checkParameters() const noexcept
     std::cout << "`checkParameters()` says >: End of parameters.\n\n";
 }
 
-/**
- * This function calculates initial positions and momenta of atoms.
- **/
+/***************************************************************************************************
+ * This function calculates initial positions, momenta, forces and potentials acting on atoms in
+ * initial state. Primarily we calculate there the trapping potentials, repulsion related to sphere
+ * walls, total forces impact to particles, van der Waals interactions, interaction forces between
+ * atoms and total potential. Next that function calculates total energy (Hamiltonian), initial real
+ * temperature (T) and initial pressure related to sphere walls.
+ * @param char* filename where to save initial positions,
+ * @param char* filename where to save initial momenta,
+ * @param char* filename where to save initial H, T and P.
+ **************************************************************************************************/
 void Argon::initialState(const char *rFilename, const char *pFilename, const char *htpFilename)
 {
     // Calculate initial positions of atoms (5)
@@ -453,7 +341,7 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
 
     // Calculate initial forces and potentials affecting to atoms
     V = 0.; // Total potential energy
-
+    // Forces and potentials loop
     for (usint i = 0; i < N; i++)
     {
         // Absolute value of r_i -> |r_i|
@@ -528,151 +416,37 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
 
     initialStateCheck = true;
     saveInitialState(rFilename, pFilename, htpFilename);
-
     std::cout << "`initialState()` says >: Successfully calculated and saved initial state.\n\n";
 }
 
-/** This function saves initial state to given files.
- * @param char* filename where to save initial positions,
- * @param char* filename where to save initial momenta,
- * @param char* filename where to save initial H, T and P.
- **/
-void Argon::saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const
+void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
 {
-    std::ofstream rOut("../Out/" + std::string(rFilename), std::ios::out);
-    std::ofstream pOut("../Out/" + std::string(pFilename), std::ios::out);
-    std::ofstream htpOut("../Out/" + std::string(htpFilename), std::ios::out);
-
-    // Number of atoms in header to read by Jmol
-    rOut << N << "\n\n";
-    pOut << N << "\n\n";
-
-    for (usint i = 0; i < N; i++)
+    if (initialStateCheck == true)
     {
-        // AR beacuse of we analyse Argon gas
-        rOut << "AR ";
-        pOut << "AR ";
+        std::cout << "`simulateDynamics()` says >: System is ready to simulation.\n\n";
 
-        for (usint j = 0; j < K; j++)
-        {
-            rOut << r0[i][j] << ' ';
-            pOut << p0[i][j] << ' ';
-        }
+        std::ofstream ofileRt("../Out/" + std::string(rFilename), std::ios::out);
+        std::ofstream ofileHtp("../Out/" + std::string(htpFilename), std::ios::out);
 
-        rOut << '\n';
-        pOut << '\n';
-    }
+        // Save initial positions and initial H, T and P
+        saveCurrentPositions(ofileRt);
+        saveCurrentHTP(0., ofileHtp);
 
-    // Header with physical parameters
-    htpOut << std::fixed << std::setprecision(5);
-    htpOut << "t (ps)\t";
-    htpOut << "H (kJ/mol)\t";
-    htpOut << "T (K)\t";
-    htpOut << "P (atm)\n";
-    htpOut << 0 << '\t' << H << '\t' << T << '\t' << P << '\n';
-
-    rOut.close();
-    pOut.close();
-    htpOut.close();
-}
-
-/**
- * This function calculates initial forces and potentials acting on atoms in initial state.
- * Primarily we calculate there the trapping potentials, repulsion related to sphere walls,
- * total forces impact to particles, van der Waals interactions, interaction forces between atoms,
- * and total potential. Next that function calculates total energy (Hamiltonian), initial real
- * temperature (T) and initial pressure related to sphere walls.
- **/
-void Argon::initialForces()
-{
-    // Total potential energy
-    V = 0.;
-
-    for (usint i = 0; i < N; i++)
-    {
-        // Absolute value of r_i -> |r_i|
-        double r_i = sqrt(r0[i][0] * r0[i][0] + r0[i][1] * r0[i][1] + r0[i][2] * r0[i][2]);
-
-        // (10)
-        if (r_i < L)
-            Vs[i] = 0.;
-        else if (r_i >= L)
-            Vs[i] = 0.5 * f * (r_i - L) * (r_i - L);
-
-        // Accumulate potential related to sphere walls to total potential
-        V += Vs[i];
-
-        // (14)
-        for (usint j = 0; j < K; j++)
-        {
-            if (r_i < L)
-                Fs[i][j] = 0.;
-            else if (r_i >= L)
-                Fs[i][j] = f * (L - r_i) * r0[i][j] / r_i;
-
-            // Accumulate repulsive forces related to sphere walls to total forces
-            Fi[i][j] = Fs[i][j];
-        }
-
-        // (9) and (13)
-        for (usint j = 0; j < i; j++)
-        {
-            // Absolute value of r_i - r_j -> |r_i - r_j|
-            double r_ij = sqrt((r0[i][0] - r0[j][0]) * (r0[i][0] - r0[j][0]) + (r0[i][1] - r0[j][1]) * (r0[i][1] - r0[j][1]) +
-                               (r0[i][2] - r0[j][2]) * (r0[i][2] - r0[j][2]));
-
-            // Local variables to evaluate powers -> huge increase of performance (instead of calculate with common pow())
-            double y = (R / r_ij) * (R / r_ij);
-            double x = y * y * y;
-            // (9)
-            Vp[i][j] = e * x * (x - 2.);
-
-            for (usint k = 0; k < K; k++)
-            {
-                // Fp is not required as 3D array, we may use just ordinary variable but with Fp is more evident
-                // what is happens here
-                Fp[i][j][k] = 12. * e * x * (x - 1.) * (r0[i][k] - r0[j][k]) / (r_ij * r_ij);
-
-                // Symmetry of forces matrix (only one triangular matrix needs to be calculated) -> increase performance
-                Fi[i][k] += Fp[i][j][k];
-                Fi[j][k] -= Fp[i][j][k];
-            }
-
-            // Accumulate van der Waals potentials
-            V += Vp[i][j];
-        }
-    }
-
-    prepareFiles();
-    calculateCurrentHTP();
-    saveCurrentHTP(0.);
-
-    // Initial forces and potentials should be calculated
-    initialFoPoCheck = true;
-
-    std::cout << "`initialForces()` says >: Successfully calculated initial forces and potentials.\n\n";
-}
-
-void Argon::simulationLoop()
-{
-    if (initialStateCheck == true && initialFoPoCheck == true)
-    {
-        std::cout << "`simulationLoop()` says >: System is ready to simulation.\n\n";
-
-        // Save initial positions
-        saveCurrentPositions();
         // Current information to track simulation
         printCurrentInfo(0.);
 
+        // At this point, these values are not computed
         Hmean = 0.;
         Tmean = 0.;
         Pmean = 0.;
 
+        // Informations print interval
         uint infoOut = Sd / 10;
 
         // Simulation loop
         for (uint s = 1; s <= So + Sd; s++)
         {
+            // Print current informations
             if (s % infoOut == 0)
             {
                 printCurrentInfo(s * tau);
@@ -756,14 +530,14 @@ void Argon::simulationLoop()
             // Save temporary positions at given time
             if (s % Sxyz == 0)
             {
-                saveCurrentPositions();
+                saveCurrentPositions(ofileRt);
             }
 
             // Calculate and save temporary H, T and P at given time
             if (s % Sout == 0)
             {
                 calculateCurrentHTP();
-                saveCurrentHTP(s * tau);
+                saveCurrentHTP(s * tau, ofileHtp);
             }
 
             // Accumulate mean values
@@ -775,15 +549,20 @@ void Argon::simulationLoop()
             }
         }
 
+        // Average the cumulative values
+        Hmean /= Sd;
+        Tmean /= Sd;
+        Pmean /= Sd;
+
         printCurrentInfo((So + Sd) * tau);
-        saveMeanHTP(Hmean / Sd, Tmean / Sd, Pmean / Sd);
-        closeFiles();
+
+        ofileRt.close();
+        ofileHtp.close();
     }
     else
     {
-        std::cerr << "`simulationLoop()` says >: Error - system is not ready to simulation!\n";
-        std::cerr << "`simulationLoop()` says >: Error - calculate initial state before!\n";
-        std::cerr << "`simulationLoop()` says >: Error - leave the simulation.\n\n";
+        std::cerr << "`simulateDynamics()` says >: Error - system is not ready to simulation!\n";
+        std::cerr << "`simulateDynamics()` says >: Error - calculate initial state before!\n\n";
     }
 }
 
@@ -802,4 +581,128 @@ std::tuple<double *, usint> Argon::getMomentumAbs() const
     }
 
     return std::make_tuple(pAbs, N);
+}
+
+/**
+ * This function calculates current Hamiltonian, Temperature and Pressure
+ * of the system. It uses current momenta and sphere repulsion to this.
+ **/
+void Argon::calculateCurrentHTP()
+{
+    // Prepare to accumulate physical parameters at initial time
+    H = V; // At this moment Hamiltonian is just total potential
+    T = 0.;
+    P = 0.;
+    Ek = 0.;
+
+    for (usint i = 0; i < N; i++)
+    {
+        // Local variable to increase performance;
+        Ek = (p0[i][0] * p0[i][0] + p0[i][1] * p0[i][1] + p0[i][2] * p0[i][2]) / (2. * m);
+
+        // Accumulate physical parameters
+        H += Ek;
+        T += 2. / (3. * N * k) * Ek;
+        P += sqrt(Fs[i][0] * Fs[i][0] + Fs[i][1] * Fs[i][1] + Fs[i][2] * Fs[i][2]) / (4. * M_PI * L * L);
+    }
+}
+
+/**
+ * Writes to file current time, Hamiltonian, Temperature and Pressure of the system.
+ * @param double current time,
+ * @param ofstream file where to save current H, T and P.
+ **/
+inline void Argon::saveCurrentHTP(const double &time, std::ofstream &ofileHtp)
+{
+    ofileHtp << time << '\t' << H << '\t' << T << '\t' << P << '\n';
+}
+
+/**
+ * Writes to file current positions of the atoms.
+ * @param ofstream file where to save current positions.
+ **/
+void Argon::saveCurrentPositions(std::ofstream &ofileRt)
+{
+    // Number of atoms to read by Jmol
+    ofileRt << N;
+    ofileRt << "\n\n";
+
+    for (usint i = 0; i < N; i++)
+    {
+        ofileRt << "AR ";
+
+        for (usint j = 0; j < K; j++)
+            ofileRt << r0[i][j] << ' ';
+        ofileRt << '\n';
+    }
+
+    ofileRt << '\n';
+}
+
+/** This function saves initial state to given files.
+ * @param char* filename where to save initial positions,
+ * @param char* filename where to save initial momenta,
+ * @param char* filename where to save initial H, T and P.
+ **/
+void Argon::saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const
+{
+    std::ofstream rOut("../Out/" + std::string(rFilename), std::ios::out);
+    std::ofstream pOut("../Out/" + std::string(pFilename), std::ios::out);
+    std::ofstream htpOut("../Out/" + std::string(htpFilename), std::ios::out);
+
+    // Number of atoms in header to read by Jmol
+    rOut << N << "\n\n";
+    pOut << N << "\n\n";
+
+    for (usint i = 0; i < N; i++)
+    {
+        // AR beacuse of we analyse Argon gas
+        rOut << "AR ";
+        pOut << "AR ";
+
+        for (usint j = 0; j < K; j++)
+        {
+            rOut << r0[i][j] << ' ';
+            pOut << p0[i][j] << ' ';
+        }
+
+        rOut << '\n';
+        pOut << '\n';
+    }
+
+    // Header with physical parameters
+    htpOut << std::fixed << std::setprecision(5);
+    htpOut << "t (ps)\t";
+    htpOut << "H (kJ/mol)\t";
+    htpOut << "T (K)\t";
+    htpOut << "P (atm)\n";
+    htpOut << 0 << '\t' << H << '\t' << T << '\t' << P << '\n';
+
+    rOut.close();
+    pOut.close();
+    htpOut.close();
+}
+
+/**
+ * Checks if the input file is empty.
+ * @param ifstream input.
+ **/
+inline bool Argon::fileIsEmpty(std::ifstream &input) const
+{
+    return input.peek() == std::ifstream::traits_type::eof();
+}
+
+/**
+ * Print current information about the system while simulation is in progress.
+ * @param double current time.
+ **/
+void Argon::printCurrentInfo(const double &time) const
+{
+    std::cout << std::fixed << std::setprecision(5);
+    std::cout << "Current Time:             " << time << '\n';
+    std::cout << "Current Total Energy:     " << H << '\n';
+    std::cout << "Current Total Potential:  " << V << '\n';
+    std::cout << "Current Temperature:      " << T << '\n';
+    std::cout << "Current Pressure:         " << P << '\n';
+    std::cout << '\n';
 }
