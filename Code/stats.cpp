@@ -47,7 +47,10 @@ void Stats::evaluateHist()
 {
     // Evaluate histogram related to particles momentum
     distributionMean = 0.;
+    distributionMeanSq = 0.;
     distributionSigma = 0.;
+    maxStarsIndex = 0;
+    maxStars = 0;
 
     // Calculate range of histogram and its bins
     const double histRange = abs(low - up);
@@ -85,9 +88,11 @@ void Stats::evaluateHist()
 
         // Accumulate momentum to calculate distribution mean value
         distributionMean += pAbs[i];
+        distributionMeanSq += pAbs[i] * pAbs[i];
     }
 
     distributionMean /= N;
+    distributionMeanSq = sqrt(distributionMeanSq / N);
 
     // Calculate standard deviation of momentum
     for (int i = 0; i < N; i++)
@@ -123,10 +128,18 @@ void Stats::evaluateHist()
         binRangeS << "(" << binRanges[i] << "; " << binRanges[i + 1] << "]: ";
         std::cout << std::setw(captionLen - binRangeS.str().length() + 1) << "(" << binRanges[i] << "; " << binRanges[i + 1] << "]: ";
         std::cout << std::setw(3) << stars[i].length() << ' ' << stars[i] << '\n';
+
+        if (stars[i].length() > maxStars)
+        {
+            maxStarsIndex = i;
+            maxStars = stars[i].length();
+        }
+
         binRangeS.str("");
     }
 
-    // std::cout << sqrt(8. * k * T / (M_PI * m)) * m;
+    std::cout << '\n';
+    std::cout << std::resetiosflags(std::cout.flags());
 }
 
 void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, const double &TArgon, const double &KArgon, const double &MArgon)
@@ -141,4 +154,38 @@ void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, cons
 
     for (usint i = 0; i < N; i++)
         pAbs[i] = pAbsArgon[i];
+}
+
+void Stats::calculateStats()
+{
+    pProMB = sqrt(2. * k * T * m);
+    pMeanMB = sqrt(8. * k * T * m / M_PI);
+    pMeanSqMB = sqrt(3. * k * T * m);
+
+    for (usint i = 0; i < N; i++)
+    {
+        if (pAbs[i] > binRanges[maxStarsIndex] && pAbs[i] <= binRanges[maxStarsIndex + 1])
+        {
+            pProEmp += pAbs[i];
+        }
+    }
+
+    pProEmp /= maxStars;
+
+    pMeanEmp = distributionMean;
+    pMeanSqEmp = distributionMeanSq;
+
+    std::cout << std::fixed << std::setprecision(3);
+    std::cout << "pProMB:       " << pProMB << '\t' << "Most probable momentum obtained analytically.\n";
+    std::cout << "pProEmp:      " << pProEmp << '\t' << "Most probable momentum obtained numerically.\n";
+    std::cout << "Error (%):    " << std::abs(pProEmp - pProMB) / pProMB * 100. << '\n';
+    std::cout << '\n';
+    std::cout << "pMeanMB:      " << pMeanMB << '\t' << "Mean momentum obtained analytically.\n";
+    std::cout << "pMeanEmp:     " << pMeanEmp << '\t' << "Mean momentum obtained numerically.\n";
+    std::cout << "Error (%):    " << std::abs(pMeanEmp - pMeanMB) / pMeanMB * 100. << '\n';
+    std::cout << '\n';
+    std::cout << "pMeanSqMB:    " << pMeanSqMB << '\t' << "Mean square momentum obtained analytically.\n";
+    std::cout << "pMeanSqEmp:   " << pMeanSqEmp << '\t' << "Mean square momentum obtained numerically.\n";
+    std::cout << "Error (%):    " << abs(pMeanSqEmp - pMeanSqMB) / pMeanSqMB * 100. << '\n';
+    std::cout << '\n';
 }

@@ -34,25 +34,31 @@ int main(int argc, char *argv[])
 
     double *pAbs;
     usint N;
-    double T;
+    double T, k, m;
 
     std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
     // --------------------------------------
     Argon *A = new Argon;
+
     // Call function `setParameters()` is optional.
     // If you do not give file with own parameters, then simulation suppose default values.
     A->setParameters(argv[1]);
+
     // Call function `checkParameters()` is otpional.
     // It is only to information if system is properly set.
     A->checkParameters();
+
     // Call function `initialState()` is required if you want to get to simulation.
     A->initialState(argv[2], argv[3], argv[4]);
+
     // Get absolute values of momenta, its size and calculated temperature
     // is required if you want to calculate statistics.
-    std::tie(pAbs, N, T) = A->getMomentumAbs();
+    std::tie(pAbs, N, T, k, m) = A->getMomentumAbs();
+
     // Call function `simulateDynamics()` is optional.
     // But obviously it is the core of entertainment and playing with the system.
-    A->simulateDynamics(argv[5], argv[6]);
+    // A->simulateDynamics(argv[5], argv[6]);
+
     delete A;
     // --------------------------------------
     std::chrono::high_resolution_clock::time_point tk = std::chrono::high_resolution_clock::now();
@@ -63,8 +69,10 @@ int main(int argc, char *argv[])
     //     std::cout << *(pAbs + i) << '\n';
 
     // Calculate statistics from Maxwell-Boltzmann distribution
-    Stats R(0., 30., 25);
-    R.printStats(pAbs, N);
+    Stats R(0., 60., 25);
+    R.setInputFromArgon(pAbs, N, T, k, m);
+    R.evaluateHist();
+    R.calculateStats();
 
     return EXIT_SUCCESS;
 }
