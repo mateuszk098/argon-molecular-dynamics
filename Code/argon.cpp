@@ -29,6 +29,7 @@ Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.),
     // Note the parenthesis at the end of new. These caused the allocated memory's
     // value to be set to zero (value-initialize)
     p = new double[K]();
+    pAbs = new double[N]();
     Vs = new double[N]();
 
     r0 = new double *[N]();
@@ -67,6 +68,7 @@ Argon::~Argon() noexcept
     delete[] b2;
 
     delete[] p;
+    delete[] pAbs;
     delete[] Vs;
 
     for (usint i = 0; i < N; i++)
@@ -158,6 +160,7 @@ void Argon::setParameters(const char *filename) noexcept(false)
         delete[] b2;
 
         delete[] p;
+        delete[] pAbs;
         delete[] Vs;
 
         for (usint i = 0; i < N; i++)
@@ -191,6 +194,7 @@ void Argon::setParameters(const char *filename) noexcept(false)
         b2 = new double[K]{a * 0.5, a * sqrt(3.) / 6., a * sqrt(6.) / 3.};
 
         p = new double[K]();
+        pAbs = new double[N]();
         Vs = new double[N]();
 
         r0 = new double *[N]();
@@ -355,13 +359,16 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
         }
     }
 
-    // Eliminate the centre of mass movement (8)
+    // Eliminate the centre of mass movement (8) and immediately calculate absolute values
     for (usint i = 0; i < N; i++)
     {
         for (usint j = 0; j < K; j++)
         {
             p0[i][j] = p0[i][j] - (p[j] / N);
+            pAbs[i] += p0[i][j] * p0[i][j];
         }
+
+        pAbs[i] = sqrt(pAbs[i]);
     }
 
     // Calculate initial forces and potentials affecting to atoms
@@ -465,6 +472,9 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
         std::ofstream ofileRt("../Out/" + std::string(rFilename), std::ios::out);
         std::ofstream ofileHtp("../Out/" + std::string(htpFilename), std::ios::out);
 
+        ofileRt << std::fixed << std::setprecision(5);
+        ofileHtp << std::fixed << std::setprecision(5);
+
         // Save initial positions and initial H, T and P
         saveCurrentPositions(ofileRt);
         saveCurrentHTP(0., ofileHtp);
@@ -555,13 +565,16 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
                 }
             }
 
-            // Calculate momenta (18c)
+            // Calculate momenta (18c) and absolute values
             for (usint i = 0; i < N; i++)
             {
                 for (usint j = 0; j < K; j++)
                 {
                     p0[i][j] = p0[i][j] + 0.5 * Fi[i][j] * tau;
+                    pAbs[i] += p0[i][j] * p0[i][j];
                 }
+
+                pAbs[i] = sqrt(pAbs[i]);
             }
 
             // Save temporary positions at given time
@@ -612,19 +625,14 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
  *************************************************************************************/
 std::tuple<double *, usint, double, double, double> Argon::getMomentumAbs() const
 {
-    double *pAbs = new double[N];
+    double *pAbsToReturn = new double[N]();
 
-    // Calculate absolute value of momentum for every particle
     for (usint i = 0; i < N; i++)
     {
-        for (usint j = 0; j < K; j++)
-        {
-            pAbs[i] += p0[i][j] * p0[i][j];
-        }
-        pAbs[i] = sqrt(pAbs[i]);
+        pAbsToReturn[i] = pAbs[i];
     }
 
-    return std::make_tuple(pAbs, N, T, k, m);
+    return std::make_tuple(pAbsToReturn, N, T, k, m);
 }
 
 /**************************************************************************************
@@ -676,10 +684,10 @@ void Argon::saveCurrentPositions(std::ofstream &ofileRt)
 
     for (usint i = 0; i < N; i++)
     {
-        ofileRt << "AR ";
+        ofileRt << "AR\t";
 
         for (usint j = 0; j < K; j++)
-            ofileRt << r0[i][j] << ' ';
+            ofileRt << r0[i][j] << '\t';
         ofileRt << '\n';
     }
 
@@ -699,6 +707,9 @@ void Argon::saveInitialState(const char *rFilename, const char *pFilename, const
     std::ofstream pOut("../Out/" + std::string(pFilename), std::ios::out);
     std::ofstream htpOut("../Out/" + std::string(htpFilename), std::ios::out);
 
+    rOut << std::fixed << std::setprecision(5);
+    pOut << std::fixed << std::setprecision(5);
+
     // Number of atoms in header to read by Jmol
     rOut << N << "\n\n";
     pOut << N << "\n\n";
@@ -706,17 +717,17 @@ void Argon::saveInitialState(const char *rFilename, const char *pFilename, const
     for (usint i = 0; i < N; i++)
     {
         // AR beacuse of we analyse Argon gas
-        rOut << "AR ";
-        pOut << "AR ";
+        rOut << "AR\t";
+        pOut << "AR\t";
 
         for (usint j = 0; j < K; j++)
         {
-            rOut << r0[i][j] << ' ';
-            pOut << p0[i][j] << ' ';
+            rOut << r0[i][j] << '\t';
+            pOut << p0[i][j] << '\t';
         }
 
+        pOut << pAbs[i] << '\n';
         rOut << '\n';
-        pOut << '\n';
     }
 
     // Header with physical parameters

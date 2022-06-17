@@ -34,8 +34,9 @@ private:
     double *b1; ///< Second egde (width) of elementary crystal cell
     double *b2; ///< Third egde (depth) of elementary crystal cell
 
-    double *p;  ///< 1D array to store sum of momentum in each axis
-    double *Vs; ///< 1D array to store trapping potentials
+    double *p;    ///< 1D array to store sum of momentum in each axis
+    double *pAbs; ///< 1D array to store absolute value of momentum for every particle
+    double *Vs;   ///< 1D array to store trapping potentials
 
     double **r0; ///< 2D array to store atoms positions
     double **p0; ///< 2D array to store atoms momentum
