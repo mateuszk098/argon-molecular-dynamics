@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
     Stats *S = new Stats;
     S->setInputFromArgon(pAbs, N, T, k, m);
     S->evaluateHist(argv[7]);
+    delete S;
 
     return EXIT_SUCCESS;
 }
