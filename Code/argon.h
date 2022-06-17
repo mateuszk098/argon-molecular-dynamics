@@ -11,7 +11,7 @@ class Argon
 private:
     /// Declaration of parameters describing the system
     usint n;    ///< Number of atoms along the crystal edge
-    usint So;   ///< Thermalisation steps
+    uint So;    ///< Thermalisation steps
     uint Sd;    ///< Number of steps of core simulation
     usint Sout; ///< Save informations about the system every `Sout` steps
     usint Sxyz; ///< Save positions of atoms every `Sxyz` steps
@@ -50,11 +50,13 @@ private:
     std::mt19937 mt;        ///< High definition pseudo-random number generator
 
     // Physical parameters related to system
-    double V;  ///< Total potential energy;
-    double H;  ///< Hamiltonian at a given moment in time (total energy of the system - must be constant)
-    double T;  ///< Temperature of the system at a given moment in time
-    double P;  ///< Pressure of the system at a given moment in time
-    double Ek; ///< Kinetic energy at a given moment in time
+    double V;        ///< Total potential energy;
+    double H;        ///< Hamiltonian at a given moment in time (total energy of the system - must be constant)
+    double T;        ///< Temperature of the system at a given moment in time
+    double P;        ///< Pressure of the system at a given moment in time
+    double Ek;       ///< Kinetic energy at a given moment in time
+    double Vol;      ///< Volume of the system (sphere)
+    double IdealGas; ///< It should be around 1 if the ideal gas formula is fulfilled
 
     // Mean values of physical parameters
     double Hmean; ///< Mean Hamiltonian

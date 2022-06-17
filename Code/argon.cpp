@@ -11,8 +11,8 @@
  * about the system. It also prints appropriate messages.
  * @return Nothing to return.
  *************************************************************************************/
-Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.), e(1.),
-                          R(0.38), k(8.31e-3), f(1e4), L(5.), a(0.38), T0(1e3), tau(1e-3),
+Argon::Argon() noexcept : n(6), So(5000), Sd(50000), Sout(500), Sxyz(500), m(40.), e(1.),
+                          R(0.38), k(8.31e-3), f(1e4), L(6.), a(0.38), T0(1e4), tau(1e-3),
                           initialStateCheck(false), mt(std::mt19937(time(nullptr)))
 {
     N = n * n * n; // System is defined as 3D
@@ -225,19 +225,19 @@ void Argon::setParameters(const char *filename)
     {
         // Notice I do not need to reallocate memory because of default parameters
         // and buffer have the same sizes
-        n = 7;
-        So = 100;
-        Sd = 10000;
-        Sout = 100;
-        Sxyz = 100;
-        m = 1.;
+        n = 6;
+        So = 5000;
+        Sd = 50000;
+        Sout = 500;
+        Sxyz = 500;
+        m = 40.;
         R = 0.38;
         e = 1.;
         k = 8.31e-3;
         f = 1e4;
-        L = 5.;
+        L = 6.;
         a = 0.38;
-        T0 = 1e3;
+        T0 = 1e4;
         tau = 1e-3;
 
         input.close();
@@ -247,19 +247,19 @@ void Argon::setParameters(const char *filename)
     }
     catch (const std::ifstream::failure &error)
     {
-        n = 7;
-        So = 100;
-        Sd = 10000;
-        Sout = 100;
-        Sxyz = 100;
-        m = 1.;
+        n = 6;
+        So = 5000;
+        Sd = 50000;
+        Sout = 500;
+        Sxyz = 500;
+        m = 40.;
         R = 0.38;
         e = 1.;
         k = 8.31e-3;
         f = 1e4;
-        L = 5.;
+        L = 6.;
         a = 0.38;
-        T0 = 1e3;
+        T0 = 1e4;
         tau = 1e-3;
 
         std::cerr << "`setParameters()` :> " << error.what() << '\n';
@@ -485,6 +485,7 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename) noe
         Hmean = 0.;
         Tmean = 0.;
         Pmean = 0.;
+        Vol = 4. / 3. * M_PI * L * L * L;
 
         // Informations print interval
         uint infoOut = Sd / 10;
@@ -576,38 +577,48 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename) noe
                 pAbs[i] = sqrt(pAbs[i]);
             }
 
+            calculateCurrentHTP();
+
             // Save temporary positions at given time
             if (s % Sxyz == 0)
             {
                 saveCurrentPositions(ofileRt);
             }
 
-            // Calculate and save temporary H, T and P at given time
+            // Save temporary H, T and P at given time
             if (s % Sout == 0)
             {
-                calculateCurrentHTP();
                 saveCurrentHTP(s * tau, ofileHtp);
             }
 
-            // Accumulate mean values
+            // Accumulate mean values only when thermalisation is done
             if (s >= So)
             {
                 Tmean += T;
                 Pmean += P;
                 Hmean += H;
             }
-        }
+        } // End of dynamics loop
+
+        printCurrentInfo((So + Sd) * tau); // Latest step
 
         // Average the cumulative values
         Hmean /= Sd;
         Tmean /= Sd;
         Pmean /= Sd;
 
-        printCurrentInfo((So + Sd) * tau);
+        // Ideal gas law -> PV = NkT Volume not potential :)
+        IdealGas = (N * k * Tmean) / (Pmean * Vol);
+
+        std::cout << "Mean Total Energy:    " << Hmean << '\n';
+        std::cout << "Mean Temperature:     " << Tmean << '\n';
+        std::cout << "Mean Pressure:        " << Pmean << '\n';
+        std::cout << "Ideal Gas Law:        " << IdealGas << '\n';
+        std::cout << '\n';
 
         ofileRt.close();
         ofileHtp.close();
-    }
+    } // End of simulation loop
     else
     {
         std::cerr << "`simulateDynamics()` :> Error - calculate initial state before!\n\n";
@@ -710,7 +721,7 @@ void Argon::saveInitialState(const char *rFilename, const char *pFilename, const
 
     // Number of atoms in header to read by Jmol
     rOut << N << "\n\n";
-    pOut << N << "\n\n";
+    pOut << N << '\t' << T << '\t' << k << '\t' << m << "\n\n";
 
     for (usint i = 0; i < N; i++)
     {
