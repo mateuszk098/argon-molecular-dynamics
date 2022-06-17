@@ -9,6 +9,8 @@
 
 _**"Molecular dynamics (MD) is a computer simulation method for analyzing the physical movements of atoms and molecules. The atoms and molecules are allowed to interact for a fixed period of time, giving a view of the dynamic "evolution" of the system. In the most common version, the trajectories of atoms and molecules are determined by numerically solving Newton's equations of motion for a system of interacting particles, where forces between the particles and their potential energies are often calculated using interatomic potentials or molecular mechanics force fields."**_
 
+![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/ArgonGasState.gif)
+
 **More about [Molecular Dynamics](https://en.wikipedia.org/wiki/Molecular_dynamics#:~:text=Molecular%20dynamics%20(MD)%20is%20a,%22evolution%22%20of%20the%20system.).**
 
 ```c++
