@@ -61,22 +61,22 @@ private:
     double Tmean; ///< Mean Temperature
     double Pmean; ///< Mean Pressure
 
-    void calculateCurrentHTP();
-    void saveCurrentHTP(const double &time, std::ofstream &ofileHtp);
-    void saveCurrentPositions(std::ofstream &ofileRt);
-    void saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const;
-    bool fileIsEmpty(std::ifstream &input) const;
-    void printCurrentInfo(const double &time) const;
+    void calculateCurrentHTP() noexcept;
+    void saveCurrentHTP(const double &time, std::ofstream &ofileHtp) noexcept;
+    void saveCurrentPositions(std::ofstream &ofileRt) noexcept;
+    void saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const noexcept;
+    bool fileIsEmpty(std::ifstream &input) const noexcept;
+    void printCurrentInfo(const double &time) const noexcept;
 
 public:
     Argon() noexcept;
     ~Argon() noexcept;
 
-    void setParameters(const char *filename) noexcept(false);
+    void setParameters(const char *filename);
     void checkParameters() const noexcept;
-    void initialState(const char *rFilename, const char *pFilename, const char *htpFilename);
-    void simulateDynamics(const char *rFilename, const char *htpFilename);
-    std::tuple<double *, usint, double, double, double> getMomentumAbs() const;
+    void initialState(const char *rFilename, const char *pFilename, const char *htpFilename) noexcept;
+    void simulateDynamics(const char *rFilename, const char *htpFilename) noexcept;
+    std::tuple<double *, usint, double, double, double> getMomentumAbs() const noexcept;
 };
 
 #endif // ARGON_H

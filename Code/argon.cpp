@@ -18,8 +18,8 @@ Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.),
     N = n * n * n; // System is defined as 3D
     K = 3;
 
-    std::cout << "`Argon()` says >: Initialized parameters to default values." << '\n';
-    std::cout << "`Argon()` says >: Set pseudo-random number generator std::mt19937." << '\n';
+    std::cout << "`Argon()` :> Initialized parameters to default values." << '\n';
+    std::cout << "`Argon()` :> Set pseudo-random number generator std::mt19937." << '\n';
 
     // Allocate memory and immediately set the values
     b0 = new double[K]{a, 0., 0.};
@@ -54,7 +54,7 @@ Argon::Argon() noexcept : n(7), So(100), Sd(10000), Sout(100), Sxyz(100), m(1.),
             Fp[i][j] = new double[K]();
     }
 
-    std::cout << "`Argon()` says >: Allocated memory for buffer.\n\n";
+    std::cout << "`Argon()` :> Allocated memory for buffer.\n\n";
 }
 
 /**************************************************************************************
@@ -93,7 +93,7 @@ Argon::~Argon() noexcept
 
     delete[] Fp;
 
-    std::cout << "`~Argon() says >: Memory released.\n\n";
+    std::cout << "`~Argon()` :> Memory released.\n\n";
 }
 
 /**************************************************************************************
@@ -104,7 +104,7 @@ Argon::~Argon() noexcept
  * @param char* filename with parameters to set.
  * @return Nothing to return.
  *************************************************************************************/
-void Argon::setParameters(const char *filename) noexcept(false)
+void Argon::setParameters(const char *filename)
 {
     std::ifstream input;
     std::string tmp;
@@ -119,12 +119,11 @@ void Argon::setParameters(const char *filename) noexcept(false)
         if (fileIsEmpty(input))
             throw std::ifstream::failure("Exception input file is empty");
 
-        input >>
-            n >> tmp >> m >> tmp >> e >> tmp >> R >> tmp >> k >> tmp >> f >> tmp >> L >> tmp >> a >> tmp;
-        input >> T0 >> tmp >> tau >> tmp >> So >> tmp >> Sd >> tmp >> Sout >> tmp >> Sxyz >> tmp;
+        input >> tmp >> n >> tmp >> m >> tmp >> e >> tmp >> R >> tmp >> k >> tmp >> f >> tmp >> L >> tmp >> a;
+        input >> tmp >> T0 >> tmp >> tau >> tmp >> So >> tmp >> Sd >> tmp >> Sout >> tmp >> Sxyz;
 
         if (n < 1 || n > 25)
-            throw std::invalid_argument("Invalid argument: n. Must be between 1 and 15.");
+            throw std::invalid_argument("Invalid argument: n. Must be between 1 and 25.");
         if (m < 0.)
             throw std::invalid_argument("Invalid argument: m. Must be positive.");
         if (e < 0.)
@@ -152,7 +151,7 @@ void Argon::setParameters(const char *filename) noexcept(false)
         if (Sxyz < 0 || Sxyz > Sd)
             throw std::invalid_argument("Invalid argument: Sxyz. Must be between between 0 and Sd.");
 
-        std::cout << "`setParameters()` says >: Successfully set parameters from ../Config/" << filename << '\n';
+        std::cout << "`setParameters()` :> Successfully set parameters from ../Config/" << filename << '\n';
 
         // N and K are still the same so I can carefully release the memory
         delete[] b0;
@@ -220,7 +219,7 @@ void Argon::setParameters(const char *filename) noexcept(false)
         }
 
         input.close();
-        std::cout << "`setParameters()` says >: Successfully reallocated memory for new parameters.\n\n";
+        std::cout << "`setParameters()` :> Successfully reallocated memory for new parameters.\n\n";
     }
     catch (const std::invalid_argument &error)
     {
@@ -242,9 +241,9 @@ void Argon::setParameters(const char *filename) noexcept(false)
         tau = 1e-3;
 
         input.close();
-        std::cerr << "`setParameters()` says >: Exception while setting parameters from ../Config/" << filename << '\n';
-        std::cerr << "`setParameters()` says >: " << error.what() << '\n';
-        std::cerr << "`setParameters()` says >: Values are set to default now.\n\n";
+        std::cerr << "`setParameters()` :> Exception while setting parameters from ../Config/" << filename << '\n';
+        std::cerr << "`setParameters()` :> " << error.what() << '\n';
+        std::cerr << "`setParameters()` :> Values are set to default now.\n\n";
     }
     catch (const std::ifstream::failure &error)
     {
@@ -263,8 +262,8 @@ void Argon::setParameters(const char *filename) noexcept(false)
         T0 = 1e3;
         tau = 1e-3;
 
-        std::cerr << "`setParameters()` says >: " << error.what() << '\n';
-        std::cerr << "`setParameters()` says >: Values are set to default now.\n\n";
+        std::cerr << "`setParameters()` :> " << error.what() << '\n';
+        std::cerr << "`setParameters()` :> Values are set to default now.\n\n";
     }
 }
 
@@ -289,22 +288,22 @@ void Argon::setParameters(const char *filename) noexcept(false)
  **************************************************************************************/
 void Argon::checkParameters() const noexcept
 {
-    std::cout << "`checkParameters()` says >: Currently set parameters." << '\n';
-    std::cout << "`checkParameters()` says >: n:        " << n << '\n';
-    std::cout << "`checkParameters()` says >: m:        " << m << '\n';
-    std::cout << "`checkParameters()` says >: e:        " << e << '\n';
-    std::cout << "`checkParameters()` says >: R:        " << R << '\n';
-    std::cout << "`checkParameters()` says >: k:        " << k << '\n';
-    std::cout << "`checkParameters()` says >: f:        " << f << '\n';
-    std::cout << "`checkParameters()` says >: L:        " << L << '\n';
-    std::cout << "`checkParameters()` says >: a:        " << a << '\n';
-    std::cout << "`checkParameters()` says >: T0:       " << T0 << '\n';
-    std::cout << "`checkParameters()` says >: tau:      " << tau << '\n';
-    std::cout << "`checkParameters()` says >: So:       " << So << '\n';
-    std::cout << "`checkParameters()` says >: Sd:       " << Sd << '\n';
-    std::cout << "`checkParameters()` says >: Sout:     " << Sout << '\n';
-    std::cout << "`checkParameters()` says >: Sxyz:     " << Sxyz << '\n';
-    std::cout << "`checkParameters()` says >: End of parameters.\n\n";
+    std::cout << "`checkParameters()` :> Currently set parameters." << '\n';
+    std::cout << "`checkParameters()` :> n:        " << n << '\n';
+    std::cout << "`checkParameters()` :> m:        " << m << '\n';
+    std::cout << "`checkParameters()` :> e:        " << e << '\n';
+    std::cout << "`checkParameters()` :> R:        " << R << '\n';
+    std::cout << "`checkParameters()` :> k:        " << k << '\n';
+    std::cout << "`checkParameters()` :> f:        " << f << '\n';
+    std::cout << "`checkParameters()` :> L:        " << L << '\n';
+    std::cout << "`checkParameters()` :> a:        " << a << '\n';
+    std::cout << "`checkParameters()` :> T0:       " << T0 << '\n';
+    std::cout << "`checkParameters()` :> tau:      " << tau << '\n';
+    std::cout << "`checkParameters()` :> So:       " << So << '\n';
+    std::cout << "`checkParameters()` :> Sd:       " << Sd << '\n';
+    std::cout << "`checkParameters()` :> Sout:     " << Sout << '\n';
+    std::cout << "`checkParameters()` :> Sxyz:     " << Sxyz << '\n';
+    std::cout << "`checkParameters()` :> End of parameters.\n\n";
 }
 
 /**************************************************************************************
@@ -320,7 +319,7 @@ void Argon::checkParameters() const noexcept
  * @param char* filename where to save initial H, T and P.
  * @return Nothing to return.
  **************************************************************************************/
-void Argon::initialState(const char *rFilename, const char *pFilename, const char *htpFilename)
+void Argon::initialState(const char *rFilename, const char *pFilename, const char *htpFilename) noexcept
 {
     // Calculate initial positions of atoms (5)
     for (usint i_0 = 0; i_0 < n; i_0++)
@@ -448,7 +447,7 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
 
     initialStateCheck = true;
     saveInitialState(rFilename, pFilename, htpFilename);
-    std::cout << "`initialState()` says >: Successfully calculated and saved initial state.\n\n";
+    std::cout << "`initialState()` :> Successfully calculated and saved initial state.\n\n";
 }
 
 /**************************************************************************************
@@ -463,11 +462,11 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
  * @param char* filename where to save current H, T and P.
  * @return Nothing to return.
  *************************************************************************************/
-void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
+void Argon::simulateDynamics(const char *rFilename, const char *htpFilename) noexcept
 {
     if (initialStateCheck == true)
     {
-        std::cout << "`simulateDynamics()` says >: System is ready to simulation.\n\n";
+        std::cout << "`simulateDynamics()` :> System is ready to simulation.\n\n";
 
         std::ofstream ofileRt("../Out/" + std::string(rFilename), std::ios::out);
         std::ofstream ofileHtp("../Out/" + std::string(htpFilename), std::ios::out);
@@ -611,8 +610,7 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
     }
     else
     {
-        std::cerr << "`simulateDynamics()` says >: Error - system is not ready to simulation!\n";
-        std::cerr << "`simulateDynamics()` says >: Error - calculate initial state before!\n\n";
+        std::cerr << "`simulateDynamics()` :> Error - calculate initial state before!\n\n";
     }
 }
 
@@ -623,7 +621,7 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename)
  * size of this array, third is the temperature related to this calculated state, fourth
  * is the Boltzmann constant and the fifth is the particle mass.
  *************************************************************************************/
-std::tuple<double *, usint, double, double, double> Argon::getMomentumAbs() const
+std::tuple<double *, usint, double, double, double> Argon::getMomentumAbs() const noexcept
 {
     double *pAbsToReturn = new double[N]();
 
@@ -640,7 +638,7 @@ std::tuple<double *, usint, double, double, double> Argon::getMomentumAbs() cons
  * system. It uses current momenta and sphere repulsion to this.
  * @return Calculates Hamiltonian, Temperature and Pressure of the system.
  *************************************************************************************/
-void Argon::calculateCurrentHTP()
+void Argon::calculateCurrentHTP() noexcept
 {
     // Prepare to accumulate physical parameters at initial time
     H = V; // At this moment Hamiltonian is just total potential
@@ -666,7 +664,7 @@ void Argon::calculateCurrentHTP()
  * @param ofstream file where to save current H, T and P.
  * @return Set subsequent lines with current time, H, T and P in the given file.
  *************************************************************************************/
-inline void Argon::saveCurrentHTP(const double &time, std::ofstream &ofileHtp)
+inline void Argon::saveCurrentHTP(const double &time, std::ofstream &ofileHtp) noexcept
 {
     ofileHtp << time << '\t' << H << '\t' << T << '\t' << P << '\n';
 }
@@ -676,7 +674,7 @@ inline void Argon::saveCurrentHTP(const double &time, std::ofstream &ofileHtp)
  * @param ofstream file where to save current positions.
  * @return Set subsequent positions of particles in the given file.
  *************************************************************************************/
-void Argon::saveCurrentPositions(std::ofstream &ofileRt)
+void Argon::saveCurrentPositions(std::ofstream &ofileRt) noexcept
 {
     // Number of atoms to read by Jmol
     ofileRt << N;
@@ -701,7 +699,7 @@ void Argon::saveCurrentPositions(std::ofstream &ofileRt)
  * @param char* filename where to save initial H, T and P.
  * @return Set appropriate positions, momenta and H, T, P in given files.
  *************************************************************************************/
-void Argon::saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const
+void Argon::saveInitialState(const char *rFilename, const char *pFilename, const char *htpFilename) const noexcept
 {
     std::ofstream rOut("../Out/" + std::string(rFilename), std::ios::out);
     std::ofstream pOut("../Out/" + std::string(pFilename), std::ios::out);
@@ -748,7 +746,7 @@ void Argon::saveInitialState(const char *rFilename, const char *pFilename, const
  * @param ifstream input.
  * @return True if file is empty, otherwise false.
  *************************************************************************************/
-inline bool Argon::fileIsEmpty(std::ifstream &input) const
+inline bool Argon::fileIsEmpty(std::ifstream &input) const noexcept
 {
     return input.peek() == std::ifstream::traits_type::eof();
 }
@@ -758,7 +756,7 @@ inline bool Argon::fileIsEmpty(std::ifstream &input) const
  * @param double current time.
  * @return Prints current informations.
  *************************************************************************************/
-void Argon::printCurrentInfo(const double &time) const
+void Argon::printCurrentInfo(const double &time) const noexcept
 {
     std::cout << std::fixed << std::setprecision(5);
     std::cout << "Current Time:             " << time << '\n';
