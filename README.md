@@ -1,5 +1,5 @@
 # **Argon Molecular Dynamics**
-**That is simple simulation of molecular dynamics for one type of atoms interacting van der Waals' forces. One may to observe the solid -> gas phase transition and investigate thermodynamical properties characterises gas state. For the purpose of visualization we may use an open-source [Jmol](http://jmol.sourceforge.net/).**
+**That is a simple molecular dynamics simulation for one type of atom interacting with van der Waals' forces. One may observe the solid &rarr; gas phase transition and investigate thermodynamical properties that characterise the gas state. For visualisation, we may use an open-source viewer [Jmol](http://jmol.sourceforge.net/).**
 ```c++
 int i = 0;
 int a = 5.;

@@ -7,17 +7,17 @@
 #include <sstream>
 #include <fstream>
 
-Stats::Stats() : low(0.), up(0.), underflow(0), overflow(0), bins(0), maxStarsIndex(0), maxStars(0),
-                 distributionMean(0.), distributionMeanSq(0.), distributionSigma(0.), N(0), T(0.), k(0.),
-                 m(0.), pProEmp(0.), pMeanEmp(0.), pMeanSqEmp(0.), pProMB(0.), pMeanMB(0.), pMeanSqMB(0.),
-                 EkEmp(0.), EkMB(0.)
+Stats::Stats() noexcept : low(0.), up(0.), underflow(0), overflow(0), bins(0), maxStarsIndex(0), maxStars(0),
+                          distributionMean(0.), distributionMeanSq(0.), distributionSigma(0.), N(0), T(0.), k(0.),
+                          m(0.), pProEmp(0.), pMeanEmp(0.), pMeanSqEmp(0.), pProMB(0.), pMeanMB(0.), pMeanSqMB(0.),
+                          EkEmp(0.), EkMB(0.)
 {
     binRanges = new double[bins + 1]();
     stars = new std::string[bins]();
     pAbs = new double[N]();
 }
 
-Stats::~Stats()
+Stats::~Stats() noexcept
 {
     delete[] binRanges;
     delete[] stars;
@@ -75,9 +75,10 @@ void Stats::evaluateHist(const char *histFilename)
     distributionSigma = std::sqrt(distributionSigma / N);
 
     std::ofstream histOfile("../Out/" + std::string(histFilename), std::ios::out);
-    histOfile << std::fixed << std::setprecision(2); // << std::showpos
+    histOfile << std::fixed << std::setprecision(5); // << std::showpos
 
     // Print evaluated histogram with its basic statistics
+    histOfile << "Momentum Distribution:\n\n";
     histOfile << "Bins:         " << bins << '\n';
     histOfile << "Low:          " << low << '\n';
     histOfile << "Up:           " << up << '\n';
@@ -110,6 +111,45 @@ void Stats::evaluateHist(const char *histFilename)
 
         binRangeS.str("");
     }
+
+    pProMB = std::sqrt(2. * k * T * m);
+    pMeanMB = std::sqrt(8. * k * T * m / M_PI);
+    pMeanSqMB = std::sqrt(3. * k * T * m);
+    EkMB = 3. / 2. * k * T;
+
+    for (usint i = 0; i < N; i++)
+    {
+        if (pAbs[i] > binRanges[maxStarsIndex] && pAbs[i] <= binRanges[maxStarsIndex + 1])
+        {
+            pProEmp += pAbs[i];
+        }
+    }
+
+    pProEmp /= maxStars;
+    pMeanEmp = distributionMean;
+    pMeanSqEmp = distributionMeanSq;
+    EkEmp = pMeanEmp * pMeanEmp / (2. * m);
+
+    histOfile << std::fixed << std::setprecision(5);
+    histOfile << '\n';
+    histOfile << "pProMB:       " << pProMB << '\t' << "Most probable momentum obtained analytically.\n";
+    histOfile << "pProEmp:      " << pProEmp << '\t' << "Most probable momentum obtained numerically.\n";
+    histOfile << "Error (%):    " << std::abs(pProEmp - pProMB) / pProMB * 100. << '\n';
+    histOfile << '\n';
+    histOfile << "pMeanMB:      " << pMeanMB << '\t' << "Mean momentum obtained analytically.\n";
+    histOfile << "pMeanEmp:     " << pMeanEmp << '\t' << "Mean momentum obtained numerically.\n";
+    histOfile << "Error (%):    " << std::abs(pMeanEmp - pMeanMB) / pMeanMB * 100. << '\n';
+    histOfile << '\n';
+    histOfile << "pMeanSqMB:    " << pMeanSqMB << '\t' << "Mean square momentum obtained analytically.\n";
+    histOfile << "pMeanSqEmp:   " << pMeanSqEmp << '\t' << "Mean square momentum obtained numerically.\n";
+    histOfile << "Error (%):    " << std::abs(pMeanSqEmp - pMeanSqMB) / pMeanSqMB * 100. << '\n';
+    histOfile << '\n';
+    histOfile << "EkMB:         " << EkMB << '\t' << "Mean kinetic energy obtained analytically.\n";
+    histOfile << "EkEmp:        " << EkEmp << '\t' << "Mean kinetic energy obtained numerically.\n";
+    histOfile << "Error (%):    " << std::abs(EkEmp - EkMB) / EkMB * 100. << '\n';
+    histOfile << '\n';
+
+    histOfile.close();
 }
 
 void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, const double &TArgon, const double &KArgon, const double &MArgon)
@@ -138,52 +178,13 @@ void Stats::setInputFromArgon(const double *pAbsArgon, const usint &NArgon, cons
         }
     }
 
-    low = floor(std::max(low - 4., 0.));
-    up = ceil(up + 4.);
-    bins = static_cast<usint>(up - low);
+    low = floor(low);
+    up = ceil(up);
+    bins = 25; // static_cast<usint>(up - low);
 
     delete[] binRanges;
     binRanges = new double[bins + 1]();
 
     delete[] stars;
     stars = new std::string[bins]();
-}
-
-void Stats::calculateStats()
-{
-    pProMB = std::sqrt(2. * k * T * m);
-    pMeanMB = std::sqrt(8. * k * T * m / M_PI);
-    pMeanSqMB = std::sqrt(3. * k * T * m);
-    EkMB = 3. / 2. * k * T;
-
-    for (usint i = 0; i < N; i++)
-    {
-        if (pAbs[i] > binRanges[maxStarsIndex] && pAbs[i] <= binRanges[maxStarsIndex + 1])
-        {
-            pProEmp += pAbs[i];
-        }
-    }
-
-    pProEmp /= maxStars;
-    pMeanEmp = distributionMean;
-    pMeanSqEmp = distributionMeanSq;
-    EkEmp = pMeanEmp * pMeanEmp / (2. * m);
-
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << "pProMB:       " << pProMB << '\t' << "Most probable momentum obtained analytically.\n";
-    std::cout << "pProEmp:      " << pProEmp << '\t' << "Most probable momentum obtained numerically.\n";
-    std::cout << "Error (%):    " << std::abs(pProEmp - pProMB) / pProMB * 100. << '\n';
-    std::cout << '\n';
-    std::cout << "pMeanMB:      " << pMeanMB << '\t' << "Mean momentum obtained analytically.\n";
-    std::cout << "pMeanEmp:     " << pMeanEmp << '\t' << "Mean momentum obtained numerically.\n";
-    std::cout << "Error (%):    " << std::abs(pMeanEmp - pMeanMB) / pMeanMB * 100. << '\n';
-    std::cout << '\n';
-    std::cout << "pMeanSqMB:    " << pMeanSqMB << '\t' << "Mean square momentum obtained analytically.\n";
-    std::cout << "pMeanSqEmp:   " << pMeanSqEmp << '\t' << "Mean square momentum obtained numerically.\n";
-    std::cout << "Error (%):    " << std::abs(pMeanSqEmp - pMeanSqMB) / pMeanSqMB * 100. << '\n';
-    std::cout << '\n';
-    std::cout << "EkMB:         " << EkMB << '\t' << "Mean kinetic energy obtained analytically.\n";
-    std::cout << "EkEmp:        " << EkEmp << '\t' << "Mean kinetic energy obtained numerically.\n";
-    std::cout << "Error (%):    " << std::abs(EkEmp - EkMB) / EkMB * 100. << '\n';
-    std::cout << '\n';
 }

@@ -40,14 +40,11 @@ private:
     double EkMB;       ///< Kinetic energy from kinetic theory of gases
 
 public:
-    Stats();
-    Stats(const double &Low, const double &Up, const usint &Bins);
-    Stats(const Stats &H);
-    ~Stats();
+    Stats() noexcept;
+    ~Stats() noexcept;
 
     void setStats(const double &Low, const double &Up, const usint &Bins);
     void evaluateHist(const char *histFilename);
-    void calculateStats();
     void setInputFromArgon(const double *pAbs, const usint &N, const double &T, const double &K, const double &M);
 };
 
