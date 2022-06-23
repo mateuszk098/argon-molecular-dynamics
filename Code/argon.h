@@ -62,6 +62,7 @@ private:
     double Hmean; ///< Mean Hamiltonian
     double Tmean; ///< Mean Temperature
     double Pmean; ///< Mean Pressure
+    double u;     ///< Mean Chemical potential
 
     void calculateCurrentHTP() noexcept;
     void saveCurrentHTP(const double &time, std::ofstream &ofileHtp) noexcept;

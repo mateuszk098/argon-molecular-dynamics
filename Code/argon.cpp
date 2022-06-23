@@ -143,13 +143,13 @@ void Argon::setParameters(const char *filename)
         if (tau < 0. || tau > 1e-2)
             throw std::invalid_argument("Invalid argument: tau. Must be between 0 and 1e-2.");
         if (So < 0 || So > Sd)
-            throw std::invalid_argument("Invalid argument: So. Must be between between 0 and Sd.");
+            throw std::invalid_argument("Invalid argument: So. Must be between 0 and Sd.");
         if (Sd < 0)
             throw std::invalid_argument("Invalid argument: Sd. Must be positive.");
         if (Sout < 0 || Sout > Sd)
-            throw std::invalid_argument("Invalid argument: Sout. Must be between between 0 and Sd.");
+            throw std::invalid_argument("Invalid argument: Sout. Must be between 0 and Sd.");
         if (Sxyz < 0 || Sxyz > Sd)
-            throw std::invalid_argument("Invalid argument: Sxyz. Must be between between 0 and Sd.");
+            throw std::invalid_argument("Invalid argument: Sxyz. Must be between 0 and Sd.");
 
         std::cout << "`setParameters()` :> Successfully set parameters from ../Config/" << filename << '\n';
 
@@ -345,7 +345,7 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
             // Random number between 0 and 1
             double number = static_cast<double>(mt()) / static_cast<double>(mt.max());
             // Random sign of momentum variable
-            char sign = rand() % 2;
+            char sign = mt() % 2;
 
             // Calculate momentum
             if (sign == 0)
@@ -464,165 +464,168 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
  *************************************************************************************/
 void Argon::simulateDynamics(const char *rFilename, const char *htpFilename) noexcept
 {
-    if (initialStateCheck == true)
+    if (initialStateCheck == false)
     {
-        std::cout << "`simulateDynamics()` :> System is ready to simulation.\n\n";
+        std::cerr << "`simulateDynamics()` :> Error - calculate initial state before!\n\n";
+        return;
+    }
 
-        std::ofstream ofileRt("../Out/" + std::string(rFilename), std::ios::out);
-        std::ofstream ofileHtp("../Out/" + std::string(htpFilename), std::ios::out);
+    std::cout << "`simulateDynamics()` :> System is ready to simulation.\n\n";
 
-        ofileRt << std::fixed << std::setprecision(5);
-        ofileHtp << std::fixed << std::setprecision(5);
+    std::ofstream ofileRt("../Out/" + std::string(rFilename), std::ios::out);
+    std::ofstream ofileHtp("../Out/" + std::string(htpFilename), std::ios::out);
 
-        // Save initial positions and initial H, T and P
-        saveCurrentPositions(ofileRt);
-        saveCurrentHTP(0., ofileHtp);
+    ofileRt << std::fixed << std::setprecision(5);
+    ofileHtp << std::fixed << std::setprecision(5);
 
-        // Current information to track simulation
-        printCurrentInfo(0.);
+    // Save initial positions and initial H, T and P
+    saveCurrentPositions(ofileRt);
+    saveCurrentHTP(0., ofileHtp);
 
-        // At this point, these values are not computed
-        Hmean = 0.;
-        Tmean = 0.;
-        Pmean = 0.;
-        Vol = 4. / 3. * M_PI * L * L * L;
+    // Current information to track simulation
+    printCurrentInfo(0.);
 
-        // Informations print interval
-        uint infoOut = Sd / 10;
+    // At this point, these values are not computed
+    Hmean = 0.;
+    Tmean = 0.;
+    Pmean = 0.;
+    Vol = 4. / 3. * M_PI * L * L * L;
 
-        // Simulation loop
-        for (uint s = 1; s <= So + Sd; s++)
+    // Informations print interval
+    uint infoOut = Sd / 10;
+
+    // Simulation loop
+    for (uint s = 1; s <= So + Sd; s++)
+    {
+        // Print current informations
+        if (s % infoOut == 0)
         {
-            // Print current informations
-            if (s % infoOut == 0)
+            printCurrentInfo(s * tau);
+        }
+
+        // Calculate auxiliary momenta (18a) and positions (18b)
+        for (usint i = 0; i < N; i++)
+        {
+            for (usint j = 0; j < K; j++)
             {
-                printCurrentInfo(s * tau);
+                p0[i][j] = p0[i][j] + 0.5 * Fi[i][j] * tau;
+                r0[i][j] = r0[i][j] + p0[i][j] * tau / m;
             }
+        }
 
-            // Calculate auxiliary momenta (18a) and positions (18b)
-            for (usint i = 0; i < N; i++)
+        // In every step set total potential to zero (IMPORTANT!)
+        V = 0.;
+
+        // Dynamics loop
+        for (usint i = 0; i < N; i++)
+        {
+            // Absolute value of r_i -> |r_i|
+            double r_i = sqrt(r0[i][0] * r0[i][0] + r0[i][1] * r0[i][1] + r0[i][2] * r0[i][2]);
+
+            // (10)
+            if (r_i < L)
+                Vs[i] = 0.;
+            else if (r_i >= L)
+                Vs[i] = 0.5 * f * (r_i - L) * (r_i - L);
+
+            // Accumulate potential related to sphere walls to total potential
+            V += Vs[i];
+
+            // (14)
+            for (usint j = 0; j < K; j++)
             {
-                for (usint j = 0; j < K; j++)
-                {
-                    p0[i][j] = p0[i][j] + 0.5 * Fi[i][j] * tau;
-                    r0[i][j] = r0[i][j] + p0[i][j] * tau / m;
-                }
-            }
-
-            // In every step set total potential to zero (IMPORTANT!)
-            V = 0.;
-
-            // Dynamics loop
-            for (usint i = 0; i < N; i++)
-            {
-                // Absolute value of r_i -> |r_i|
-                double r_i = sqrt(r0[i][0] * r0[i][0] + r0[i][1] * r0[i][1] + r0[i][2] * r0[i][2]);
-
-                // (10)
                 if (r_i < L)
-                    Vs[i] = 0.;
+                    Fs[i][j] = 0.;
                 else if (r_i >= L)
-                    Vs[i] = 0.5 * f * (r_i - L) * (r_i - L);
+                    Fs[i][j] = f * (L - r_i) * r0[i][j] / r_i;
 
-                // Accumulate potential related to sphere walls to total potential
-                V += Vs[i];
+                // Accumulate repulsive forces related to sphere walls to total forces
+                Fi[i][j] = Fs[i][j];
+            }
 
-                // (14)
-                for (usint j = 0; j < K; j++)
+            for (usint j = 0; j < i; j++)
+            {
+                // Absolute value of r_i - r_j -> |r_i - r_j|
+                double r_ij = sqrt((r0[i][0] - r0[j][0]) * (r0[i][0] - r0[j][0]) + (r0[i][1] - r0[j][1]) * (r0[i][1] - r0[j][1]) +
+                                   (r0[i][2] - r0[j][2]) * (r0[i][2] - r0[j][2]));
+
+                // Local variables to evaluate powers -> huge increase of performance (instead of calculate with common pow())
+                double y = (R / r_ij) * (R / r_ij);
+                double x = y * y * y;
+                // (9)
+                Vp[i][j] = e * x * (x - 2.);
+
+                for (usint k = 0; k < K; k++)
                 {
-                    if (r_i < L)
-                        Fs[i][j] = 0.;
-                    else if (r_i >= L)
-                        Fs[i][j] = f * (L - r_i) * r0[i][j] / r_i;
+                    Fp[i][j][k] = 12. * e * x * (x - 1.) * (r0[i][k] - r0[j][k]) / (r_ij * r_ij);
 
-                    // Accumulate repulsive forces related to sphere walls to total forces
-                    Fi[i][j] = Fs[i][j];
+                    // Symmetry of forces matrix (only one triangular matrix needs to be calculated) -> increase performance
+                    Fi[i][k] += Fp[i][j][k];
+                    Fi[j][k] -= Fp[i][j][k];
                 }
 
-                for (usint j = 0; j < i; j++)
-                {
-                    // Absolute value of r_i - r_j -> |r_i - r_j|
-                    double r_ij = sqrt((r0[i][0] - r0[j][0]) * (r0[i][0] - r0[j][0]) + (r0[i][1] - r0[j][1]) * (r0[i][1] - r0[j][1]) +
-                                       (r0[i][2] - r0[j][2]) * (r0[i][2] - r0[j][2]));
-
-                    // Local variables to evaluate powers -> huge increase of performance (instead of calculate with common pow())
-                    double y = (R / r_ij) * (R / r_ij);
-                    double x = y * y * y;
-                    // (9)
-                    Vp[i][j] = e * x * (x - 2);
-
-                    for (usint k = 0; k < K; k++)
-                    {
-                        Fp[i][j][k] = 12. * e * x * (x - 1) * (r0[i][k] - r0[j][k]) / (r_ij * r_ij);
-
-                        // Symmetry of forces matrix (only one triangular matrix needs to be calculated) -> increase performance
-                        Fi[i][k] += Fp[i][j][k];
-                        Fi[j][k] -= Fp[i][j][k];
-                    }
-
-                    // Accumulate van der Waals potentials
-                    V += Vp[i][j];
-                }
-            }
-
-            // Calculate momenta (18c) and absolute values
-            for (usint i = 0; i < N; i++)
-            {
-                for (usint j = 0; j < K; j++)
-                {
-                    p0[i][j] = p0[i][j] + 0.5 * Fi[i][j] * tau;
-                    pAbs[i] += p0[i][j] * p0[i][j];
-                }
-
-                pAbs[i] = sqrt(pAbs[i]);
-            }
-
-            calculateCurrentHTP();
-
-            // Save temporary positions at given time
-            if (s % Sxyz == 0)
-            {
-                saveCurrentPositions(ofileRt);
-            }
-
-            // Save temporary H, T and P at given time
-            if (s % Sout == 0)
-            {
-                saveCurrentHTP(s * tau, ofileHtp);
-            }
-
-            // Accumulate mean values only when thermalisation is done
-            if (s >= So)
-            {
-                Tmean += T;
-                Pmean += P;
-                Hmean += H;
+                // Accumulate van der Waals potentials
+                V += Vp[i][j];
             }
         } // End of dynamics loop
 
-        printCurrentInfo((So + Sd) * tau); // Latest step
+        // Calculate momenta (18c) and absolute values
+        for (usint i = 0; i < N; i++)
+        {
+            for (usint j = 0; j < K; j++)
+            {
+                p0[i][j] = p0[i][j] + 0.5 * Fi[i][j] * tau;
+                pAbs[i] += p0[i][j] * p0[i][j];
+            }
 
-        // Average the cumulative values
-        Hmean /= Sd;
-        Tmean /= Sd;
-        Pmean /= Sd;
+            pAbs[i] = sqrt(pAbs[i]);
+        }
 
-        // Ideal gas law -> PV = NkT Volume not potential :)
-        IdealGas = (N * k * Tmean) / (Pmean * Vol);
+        calculateCurrentHTP();
 
-        std::cout << "Mean Total Energy:    " << Hmean << '\n';
-        std::cout << "Mean Temperature:     " << Tmean << '\n';
-        std::cout << "Mean Pressure:        " << Pmean << '\n';
-        std::cout << "Ideal Gas Law:        " << IdealGas << '\n';
-        std::cout << '\n';
+        // Save temporary positions at given time
+        if (s % Sxyz == 0)
+        {
+            saveCurrentPositions(ofileRt);
+        }
 
-        ofileRt.close();
-        ofileHtp.close();
+        // Save temporary H, T and P at given time
+        if (s % Sout == 0)
+        {
+            saveCurrentHTP(s * tau, ofileHtp);
+        }
+
+        // Accumulate mean values only when thermalisation is done
+        if (s >= So)
+        {
+            Tmean += T;
+            Pmean += P;
+            Hmean += H;
+        }
     } // End of simulation loop
-    else
-    {
-        std::cerr << "`simulateDynamics()` :> Error - calculate initial state before!\n\n";
-    }
+
+    printCurrentInfo((So + Sd) * tau); // Latest step
+
+    // Average the cumulative values
+    Hmean /= Sd;
+    Tmean /= Sd;
+    Pmean /= Sd;
+
+    // Ideal gas law -> PV = NkT Volume not potential :)
+    IdealGas = (N * k * Tmean) / (Pmean * Vol);
+
+    // Chemical potential from microcanonical ensemble
+    u = k * T * log(Vol / N * (4. * M_PI * m * Hmean) / (3. * N) * sqrt((4. * M_PI * m * Hmean) / (3. * N)));
+
+    std::cout << "Mean Total Energy:        " << Hmean << '\n';
+    std::cout << "Mean Temperature:         " << Tmean << '\n';
+    std::cout << "Mean Pressure:            " << Pmean << '\n';
+    std::cout << "Ideal Gas Law:            " << IdealGas << '\n';
+    std::cout << "Mean Chemical Potential:  " << u << '\n';
+    std::cout << '\n';
+
+    ofileRt.close();
+    ofileHtp.close();
 }
 
 /**************************************************************************************
