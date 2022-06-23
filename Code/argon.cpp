@@ -614,10 +614,14 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename) noe
     // Ideal gas law -> PV = NkT Volume not potential :)
     IdealGas = (N * k * Tmean) / (Pmean * Vol);
 
-    std::cout << "Mean Total Energy:    " << Hmean << '\n';
-    std::cout << "Mean Temperature:     " << Tmean << '\n';
-    std::cout << "Mean Pressure:        " << Pmean << '\n';
-    std::cout << "Ideal Gas Law:        " << IdealGas << '\n';
+    // Chemical potential from microcanonical ensemble
+    u = k * T * log(Vol / N * (4. * M_PI * m * Hmean) / (3. * N) * sqrt((4. * M_PI * m * Hmean) / (3. * N)));
+
+    std::cout << "Mean Total Energy:        " << Hmean << '\n';
+    std::cout << "Mean Temperature:         " << Tmean << '\n';
+    std::cout << "Mean Pressure:            " << Pmean << '\n';
+    std::cout << "Ideal Gas Law:            " << IdealGas << '\n';
+    std::cout << "Mean Chemical Potential:  " << u << '\n';
     std::cout << '\n';
 
     ofileRt.close();
