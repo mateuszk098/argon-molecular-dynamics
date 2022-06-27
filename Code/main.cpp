@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     // If you do not give file with own parameters, then simulation suppose default values.
     A->setParameters(argv[1]);
 
-    // Call function `checkParameters()` is otpional.
+    // Call function `checkParameters()` is optional.
     // It is only to information if system is properly set.
     A->checkParameters();
 
