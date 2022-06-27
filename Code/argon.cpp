@@ -114,10 +114,10 @@ void Argon::setParameters(const char *filename)
         input.open("../Config/" + std::string(filename), std::ios::in);
 
         if (input.fail())
-            throw std::ifstream::failure("Exception opening/reading input file");
+            throw std::ifstream::failure("Exception opening/reading parameters input file.");
 
         if (fileIsEmpty(input))
-            throw std::ifstream::failure("Exception input file is empty");
+            throw std::ifstream::failure("Exception parameters input file is empty.");
 
         input >> tmp >> n >> tmp >> m >> tmp >> e >> tmp >> R >> tmp >> k >> tmp >> f >> tmp >> L >> tmp >> a;
         input >> tmp >> T0 >> tmp >> tau >> tmp >> So >> tmp >> Sd >> tmp >> Sout >> tmp >> Sxyz;
