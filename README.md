@@ -100,12 +100,19 @@ delete S;
 
 # **Example Results**
 
-**Dynamics of argon gas composed of 216 molecules at temperature 10<sup>4</sup> K:**
+---
+### **Dynamics of argon gas composed of 216 molecules at temperature 10<sup>4</sup> K:**
 
 ![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/ArgonGasState.gif)
 
-**Crystal composed of 15625 molecules at temperature 10<sup>2</sup> K:**
+---
+### **Crystal composed of 15625 molecules at temperature 10<sup>2</sup> K:**
+
 ![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules100K.png)
 
-**Density distribution of that:**
-![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules_hist_.png)
+---
+### **Density distribution of that:**
+
+![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules_hist.png)
+
+---
