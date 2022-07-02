@@ -9,8 +9,6 @@
 
 _**"Molecular dynamics (MD) is a computer simulation method for analyzing the physical movements of atoms and molecules. The atoms and molecules are allowed to interact for a fixed period of time, giving a view of the dynamic "evolution" of the system. In the most common version, the trajectories of atoms and molecules are determined by numerically solving Newton's equations of motion for a system of interacting particles, where forces between the particles and their potential energies are often calculated using interatomic potentials or molecular mechanics force fields."**_
 
-![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/ArgonGasState.gif)
-
 **More about [Molecular Dynamics](https://en.wikipedia.org/wiki/Molecular_dynamics#:~:text=Molecular%20dynamics%20(MD)%20is%20a,%22evolution%22%20of%20the%20system.).**
 
 
@@ -50,6 +48,16 @@ _**"Molecular dynamics (MD) is a computer simulation method for analyzing the ph
 
 **C++ code to set in main file:**
 ```c++
+// Usage: ./main <1> <2> <3> <4> <5> <6> <7>
+// Where:
+// <1> - input file with parameters in `Config` folder e.g. parameters.txt
+// <2> - output file with initial positions to save in `Out` folder e.g. r0_init.txt
+// <3> - output file with initial H, T, P to save in `Out` folder e.g. htp_init.txt
+// <4> - output file with initial momenta to save in `Out` folder e.g. p0_init.txt
+// <5> - output file with positions from the whole simulation to save in `Out` folder e.g. rt_sim.txt
+// <6> - output file with H, T and P from the whole simulation to save in `Out` folder e.g. htp_sim.txt
+// <7> - output file with initial momentum histogram to save in `Out` folder e.g. hist.txt
+
 // Create object first.
 Argon *A = new Argon;
 
@@ -57,7 +65,7 @@ Argon *A = new Argon;
 // If you do not give file with own parameters, then simulation suppose default values.
 A->setParameters(argv[1]);
 
-// Call function `checkParameters()` is otpional.
+// Call function `checkParameters()` is optional.
 // It is only to information if system is properly set.
 A->checkParameters();
 
@@ -89,4 +97,15 @@ S->setInputFromArgon(pAbs, N, T, k, m);
 S->evaluateHist(argv[7]);
 delete S;
 ```
----
+
+# **Example Results**
+
+**Dynamics of argon gas composed of 216 molecules at temperature 10<sup>4</sup> K:**
+
+![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/ArgonGasState.gif)
+
+**Crystal composed of 15625 molecules at temperature 10<sup>2</sup> K:**
+![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules100K.png)
+
+**Density distribution of that:**
+![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules_hist_.png)
