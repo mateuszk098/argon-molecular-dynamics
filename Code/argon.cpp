@@ -7,7 +7,7 @@
 #include <iomanip>
 
 /**************************************************************************************
- * Default constructor initializes exmaple parameters and memory to store informations
+ * Default constructor initializes example parameters and memory to store informations
  * about the system. It also prints appropriate messages.
  * @return Nothing to return.
  *************************************************************************************/
@@ -407,7 +407,8 @@ void Argon::initialState(const char *rFilename, const char *pFilename, const cha
                                (r0[i][2] - r0[j][2]) * (r0[i][2] - r0[j][2]));
 
             // Local variables to evaluate powers -> huge increase of performance (instead of calculate with common pow())
-            double y = (R / r_ij) * (R / r_ij);
+            double z = R / r_ij;
+            double y = z * z;
             double x = y * y * y;
             // (9)
             Vp[i][j] = e * x * (x - 2.);
@@ -550,7 +551,8 @@ void Argon::simulateDynamics(const char *rFilename, const char *htpFilename) noe
                                    (r0[i][2] - r0[j][2]) * (r0[i][2] - r0[j][2]));
 
                 // Local variables to evaluate powers -> huge increase of performance (instead of calculate with common pow())
-                double y = (R / r_ij) * (R / r_ij);
+                double z = R / r_ij;
+                double y = z * z;
                 double x = y * y * y;
                 // (9)
                 Vp[i][j] = e * x * (x - 2.);
