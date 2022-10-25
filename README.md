@@ -12,7 +12,7 @@ _**"Molecular dynamics (MD) is a computer simulation method for analyzing the ph
 **More about [Molecular Dynamics](https://en.wikipedia.org/wiki/Molecular_dynamics#:~:text=Molecular%20dynamics%20(MD)%20is%20a,%22evolution%22%20of%20the%20system.).**
 
 
-# **What This Offers**
+# **What this Offers**
 - **Simulation of dynamics for an any ideal gas which satisfies the ideal gas law and the Maxwell-Boltzmann distribution.**
 - **Simulation of melting the crystals.**
 - **Calculations of fundamental properties of the system.**
@@ -100,7 +100,6 @@ delete S;
 
 # **Example Results**
 
----
 ### **Dynamics of argon gas composed of 216 molecules at temperature 10<sup>4</sup> K:**
 
 ![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/ArgonGasState.gif)
