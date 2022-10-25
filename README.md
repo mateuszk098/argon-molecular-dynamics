@@ -4,7 +4,7 @@
 
 **That is a simple molecular dynamics simulation for one type of atom (especially Argon) interacting with van der Waals' forces. One may observe the solid &rarr; gas phase transition and investigate thermodynamical properties that characterise the gas state.**
 
-# **What is Molecular Dynamics?**
+## **What is Molecular Dynamics?**
 **Referring to Wikipedia:**
 
 _**"Molecular dynamics (MD) is a computer simulation method for analyzing the physical movements of atoms and molecules. The atoms and molecules are allowed to interact for a fixed period of time, giving a view of the dynamic "evolution" of the system. In the most common version, the trajectories of atoms and molecules are determined by numerically solving Newton's equations of motion for a system of interacting particles, where forces between the particles and their potential energies are often calculated using interatomic potentials or molecular mechanics force fields."**_
@@ -12,7 +12,7 @@ _**"Molecular dynamics (MD) is a computer simulation method for analyzing the ph
 **More about [Molecular Dynamics](https://en.wikipedia.org/wiki/Molecular_dynamics#:~:text=Molecular%20dynamics%20(MD)%20is%20a,%22evolution%22%20of%20the%20system.).**
 
 
-# **What this Offers**
+## **What this offers?**
 - **Simulation of dynamics for an any ideal gas which satisfies the ideal gas law and the Maxwell-Boltzmann distribution.**
 - **Simulation of melting the crystals.**
 - **Calculations of fundamental properties of the system.**
@@ -20,13 +20,13 @@ _**"Molecular dynamics (MD) is a computer simulation method for analyzing the ph
 
 **More about [Maxwell-Boltzmann Distribution](https://en.wikipedia.org/wiki/Maxwell%E2%80%93Boltzmann_distribution) and [Ideal Gas Law](https://en.wikipedia.org/wiki/Ideal_gas_law).**
 
-# **Using Units**
+## **Units used in the system:**
 - **Length: 1 nm (10<sup>-9</sup> m).**
 - **Time: 1 ps (10<sup>-12</sup> s).**
 - **Mass: 1 u (1.66 x 10<sup>-27</sup> kg).**
 - **Temperature: 1 K.**
 
-# **How to Use**
+## **How to use?**
 **The primary program control is done by setting the system parameters.**
 **Parameters to set in program:**
 
@@ -98,20 +98,13 @@ S->evaluateHist(argv[7]);
 delete S;
 ```
 
-# **Example Results**
+## **Example results:**
 
-### **Dynamics of argon gas composed of 216 molecules at temperature 10<sup>4</sup> K:**
+**Dynamics of 216 molecules at temperature 10<sup>4</sup> K:** | **Crystal of 15625 molecules at temperature 10<sup>2</sup> K:**
+:-------------------------------------------------:|:-------------------------------------------------:
+<img src="https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/ArgonGasState.gif" width="478"/> | <img src="https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules100K.png" width="478"/>
 
-![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/ArgonGasState.gif)
-
----
-### **Crystal composed of 15625 molecules at temperature 10<sup>2</sup> K:**
-
-![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules100K.png)
-
----
-### **Density distribution of that:**
-
-![](https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules_hist.png)
-
----
+<p align="center">
+  **Momentum distribution fulfils Maxwell distribution:**
+  <img src="https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/15625molecules_hist.png" width="478"/>
+</p>
