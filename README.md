@@ -102,7 +102,7 @@ delete S;
 
 **Dynamics of 216 molecules at temperature 10<sup>4</sup> K:** | **Crystal of 15625 molecules at temperature 10<sup>2</sup> K:**
 :-------------------------------------------------:|:-------------------------------------------------:
-<img src="https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/argon_gas_state.gif" width="385"/> | <img src="https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/argon_crystal_state.png" width="385"/>
+<img src="https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/argon_gas_state.gif" width="387"/> | <img src="https://github.com/mateuszk098/Argon-Molecular-Dynamics/blob/master/Images/argon_crystal_state.png" width="387"/>
 
 
 **Momentum distribution fulfils Maxwell distribution:**
